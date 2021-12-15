@@ -382,6 +382,8 @@ void __fastcall TOptDialog::GetOpt(void)
 	GloAmbRes	 ->ItemIndex	=MainForm->GloAmbRes;
 	BdsAmbRes	 ->ItemIndex	=MainForm->BdsAmbRes;
 	ValidThresAR ->Text			=s.sprintf("%.3g",MainForm->ValidThresAR);
+    ValidThresARMin->Text		=s.sprintf("%.3g",MainForm->ValidThresARMin);
+    ValidThresARMax->Text		=s.sprintf("%.3g",MainForm->ValidThresARMax);
 	GloHwBias    ->Text			=s.sprintf("%.3g",MainForm->GloHwBias);
 	OutCntResetAmb->Text		=s.sprintf("%d",MainForm->OutCntResetAmb);
 	FixCntHoldAmb->Text			=s.sprintf("%d",MainForm->FixCntHoldAmb);
@@ -425,6 +427,7 @@ void __fastcall TOptDialog::GetOpt(void)
 	
 	MeasErrR1	 ->Text			=s.sprintf("%.1f",MainForm->MeasErrR1);
 	MeasErrR2	 ->Text			=s.sprintf("%.1f",MainForm->MeasErrR2);
+	MeasErrR5	 ->Text			=s.sprintf("%.1f",MainForm->MeasErrR5);
 	MeasErr2	 ->Text			=s.sprintf("%.3f",MainForm->MeasErr2);
 	MeasErr3	 ->Text			=s.sprintf("%.3f",MainForm->MeasErr3);
 	MeasErr4	 ->Text			=s.sprintf("%.3f",MainForm->MeasErr4);
@@ -510,6 +513,8 @@ void __fastcall TOptDialog::SetOpt(void)
 	MainForm->GloAmbRes	  	=GloAmbRes	->ItemIndex;
 	MainForm->BdsAmbRes	  	=BdsAmbRes	->ItemIndex;
 	MainForm->ValidThresAR	=str2dbl(ValidThresAR->Text);
+    MainForm->ValidThresARMin=str2dbl(ValidThresARMin->Text);
+    MainForm->ValidThresARMax=str2dbl(ValidThresARMax->Text);
 	MainForm->GloHwBias	    =str2dbl(GloHwBias->Text);
 	MainForm->OutCntResetAmb=OutCntResetAmb->Text.ToInt();
 	MainForm->FixCntHoldAmb =FixCntHoldAmb->Text.ToInt();
@@ -554,6 +559,7 @@ void __fastcall TOptDialog::SetOpt(void)
 	
 	MainForm->MeasErrR1	  =str2dbl(MeasErrR1  ->Text);
 	MainForm->MeasErrR2	  =str2dbl(MeasErrR2  ->Text);
+	MainForm->MeasErrR5	  =str2dbl(MeasErrR5  ->Text);
 	MainForm->MeasErr2	  =str2dbl(MeasErr2   ->Text);
 	MainForm->MeasErr3	  =str2dbl(MeasErr3   ->Text);
 	MainForm->MeasErr4	  =str2dbl(MeasErr4   ->Text);
@@ -654,8 +660,10 @@ int ppp=PosMode->ItemIndex>=PMODE_PPP_KINEMA;
 	GloAmbRes	 ->ItemIndex	=prcopt.glomodear;
 	BdsAmbRes	 ->ItemIndex	=prcopt.bdsmodear;
 	ValidThresAR ->Text			=s.sprintf("%.3g",prcopt.thresar[0]);
-    MaxPosVarAR	 ->Text		    =s.sprintf("%.3g",prcopt.thresar[1]);
-    GloHwBias	 ->Text		    =s.sprintf("%.3g",prcopt.thresar[2]);
+	MaxPosVarAR	 ->Text			=s.sprintf("%.3g",prcopt.thresar[1]);
+	GloHwBias	 ->Text			=s.sprintf("%.3g",prcopt.thresar[2]);
+	ValidThresARMin->Text		=s.sprintf("%.3g",prcopt.thresar[5]);
+	ValidThresARMax->Text		=s.sprintf("%.3g",prcopt.thresar[6]);
 	OutCntResetAmb->Text		=s.sprintf("%d"  ,prcopt.maxout   );
 	FixCntHoldAmb->Text			=s.sprintf("%d"  ,prcopt.minfix   );
 	LockCntFixAmb  ->Text		=s.sprintf("%d"  ,prcopt.minlock  );
@@ -698,6 +706,7 @@ int ppp=PosMode->ItemIndex>=PMODE_PPP_KINEMA;
 	
 	MeasErrR1	 ->Text			=s.sprintf("%.1f",prcopt.eratio[0]);
 	MeasErrR2	 ->Text			=s.sprintf("%.1f",prcopt.eratio[1]);
+	MeasErrR5	 ->Text			=s.sprintf("%.1f",prcopt.eratio[2]);
 	MeasErr2	 ->Text			=s.sprintf("%.3f",prcopt.err[1]);
 	MeasErr3	 ->Text			=s.sprintf("%.3f",prcopt.err[2]);
 	MeasErr4	 ->Text			=s.sprintf("%.3f",prcopt.err[3]);
@@ -809,8 +818,10 @@ int ppp=PosMode->ItemIndex>=PMODE_PPP_KINEMA;
 	prcopt.glomodear=GloAmbRes	->ItemIndex;
 	prcopt.bdsmodear=BdsAmbRes	->ItemIndex;
 	prcopt.thresar[0]=str2dbl(ValidThresAR->Text);
-    prcopt.thresar[1]=str2dbl(MaxPosVarAR->Text);
+	prcopt.thresar[1]=str2dbl(MaxPosVarAR->Text);
 	prcopt.thresar[2]=str2dbl(GloHwBias->Text);
+	prcopt.thresar[5]=str2dbl(ValidThresARMin->Text);
+	prcopt.thresar[6]=str2dbl(ValidThresARMax->Text);
 	prcopt.maxout	=str2dbl(OutCntResetAmb->Text);
 	prcopt.minfix	=str2dbl(FixCntHoldAmb->Text);
 	prcopt.minlock	=str2dbl(LockCntFixAmb->Text);
@@ -854,6 +865,7 @@ int ppp=PosMode->ItemIndex>=PMODE_PPP_KINEMA;
 	
 	prcopt.eratio[0]=str2dbl(MeasErrR1->Text);
 	prcopt.eratio[1]=str2dbl(MeasErrR2->Text);
+	prcopt.eratio[2]=str2dbl(MeasErrR5->Text);
 	prcopt.err[1]	=str2dbl(MeasErr2->Text);
 	prcopt.err[2]	=str2dbl(MeasErr3->Text);
 	prcopt.err[3]	=str2dbl(MeasErr4->Text);
@@ -923,6 +935,8 @@ void __fastcall TOptDialog::UpdateEnable(void)
 	GloAmbRes      ->Enabled=ar&&AmbRes->ItemIndex>0&&NavSys2->Checked;
 	BdsAmbRes      ->Enabled=ar&&AmbRes->ItemIndex>0&&NavSys6->Checked;
 	ValidThresAR   ->Enabled=ar&&AmbRes->ItemIndex>=1&&AmbRes->ItemIndex<4;
+    ValidThresARMin->Enabled=ar&&AmbRes->ItemIndex>=1&&AmbRes->ItemIndex<4;
+    ValidThresARMax->Enabled=ar&&AmbRes->ItemIndex>=1&&AmbRes->ItemIndex<4;
 	GloHwBias      ->Enabled=ar&&GloAmbRes->ItemIndex==2;
 	LockCntFixAmb  ->Enabled=ar&&AmbRes->ItemIndex>=1;
 	ElMaskAR       ->Enabled=ar&&AmbRes->ItemIndex>=1;
@@ -1104,4 +1118,5 @@ void __fastcall TOptDialog::BtnFreqClick(TObject *Sender)
     FreqDialog->ShowModal();
 }
 //---------------------------------------------------------------------------
+
 

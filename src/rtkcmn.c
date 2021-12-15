@@ -215,7 +215,7 @@ const prcopt_t prcopt_default={ /* defaults processing options */
     {30.0,0.03,0.3},            /* std[] */
     {1E-4,1E-3,1E-4,1E-1,1E-2,0.0}, /* prn[] */
     5E-12,                      /* sclkstab */
-    {3.0,0.25,0.0,1E-9,1E-5,0.0,0.0,0.0}, /* thresar */
+    {3.0,0.25,0.0,1E-9,1E-5,3.0,3.0,0.0}, /* thresar */
     0.0,0.0,0.05,0.1,0.01,      /* elmaskar,elmaskhold,thresslip,varholdamb,gainholdamb */
     30.0,5.0,30.0,              /* maxtdif,maxinno,maxgdop */
     {0},{0},{0},                /* baseline,ru,rb */
@@ -265,10 +265,10 @@ static char *obscodes[]={       /* observation code strings */
     "6E","7D","7P","7Z","8D", "8P","4A","4B","4X",""    /* 60-69 */
 };
 static char codepris[7][MAXFREQ][16]={  /* code priority for each freq-index */
-   /* L1/E1/B1   L2/E5b/B2    L5/E5a/L3 E6/LEX    E5(a+b)         */
+    /* L1/E1/B1 L2/E5b/B2b   L5/E5a/B2a E6/LEX/B3 E5(a+b)         */
     {"CPYWMNSL","CPYWMNDLSX","IQX"     ,""       ,""       ,""}, /* GPS */
     {"CPABX"   ,"CPABX"     ,"IQX"     ,""       ,""       ,""}, /* GLO */
-    {"CABXZ"   ,"IQX"       ,"IQX"     ,"ABCXZ"  ,"IQX"    ,""}, /* GAL */
+    {"CABXZ"   ,"XIQ"       ,"XIQ"     ,"ABCXZ"  ,"IQX"    ,""}, /* GAL */
     {"CLSXZ"   ,"LSX"       ,"IQXDPZ"  ,"LSXEZ"  ,""       ,""}, /* QZS */
     {"C"       ,"IQX"       ,""        ,""       ,""       ,""}, /* SBS */
     {"IQXDPAN" ,"IQXDPZ"    ,"DPX"     ,"IQXA"   ,"DPX"    ,""}, /* BDS */
@@ -1470,6 +1470,13 @@ extern void time2epoch(gtime_t t, double *ep)
     }
     ep[0]=1970+days/1461*4+mon/12; ep[1]=mon%12+1; ep[2]=day+1;
     ep[3]=sec/3600; ep[4]=sec%3600/60; ep[5]=sec%60+t.sec;
+}
+/* same as above but output limited to n decimals for formatted output */
+extern void time2epoch_n(gtime_t t, double *ep, int n)
+{
+    if (n<0) n=0; else if (n>12) n=12;
+    if (1.0-t.sec<0.5/pow(10.0,n)) {t.time++; t.sec=0.0;};
+    time2epoch(t,ep);
 }
 /* gps time to time ------------------------------------------------------------
 * convert week and tow in gps time to gtime_t struct

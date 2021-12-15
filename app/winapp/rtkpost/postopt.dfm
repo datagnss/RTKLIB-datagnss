@@ -101,7 +101,7 @@ object OptDialog: TOptDialog
     Top = 1
     Width = 411
     Height = 377
-    ActivePage = TabSheet1
+    ActivePage = TabSheet4
     TabOrder = 4
     object TabSheet1: TTabSheet
       Caption = 'Setting&1'
@@ -463,9 +463,9 @@ object OptDialog: TOptDialog
       object LabelRatio: TLabel
         Left = 24
         Top = 32
-        Width = 196
+        Width = 181
         Height = 13
-        Caption = 'Min Ratio to Fix Ambiguity / GLO HW Bias'
+        Caption = 'Ratio to Fix Ambiguity (Min/Nom/Max)'
       end
       object Label13: TLabel
         Left = 25
@@ -537,6 +537,13 @@ object OptDialog: TOptDialog
         Height = 13
         Caption = 'Hold Amb Var / Hold Amb Gain'
       end
+      object Label48: TLabel
+        Left = 26
+        Top = 53
+        Width = 62
+        Height = 13
+        Caption = 'GLO HW Bias'
+      end
       object AmbRes: TComboBox
         Left = 248
         Top = 5
@@ -555,9 +562,9 @@ object OptDialog: TOptDialog
           'PPP-AR')
       end
       object ValidThresAR: TEdit
-        Left = 248
-        Top = 30
-        Width = 75
+        Left = 299
+        Top = 28
+        Width = 49
         Height = 21
         TabOrder = 3
         Text = '3.0'
@@ -790,12 +797,28 @@ object OptDialog: TOptDialog
         Text = '20'
       end
       object GloHwBias: TEdit
-        Left = 325
-        Top = 30
+        Left = 248
+        Top = 52
         Width = 75
         Height = 21
         TabOrder = 26
         Text = '0.0'
+      end
+      object ValidThresARMin: TEdit
+        Left = 248
+        Top = 28
+        Width = 48
+        Height = 21
+        TabOrder = 27
+        Text = '3.0'
+      end
+      object ValidThresARMax: TEdit
+        Left = 352
+        Top = 28
+        Width = 48
+        Height = 21
+        TabOrder = 28
+        Text = '3.0'
       end
     end
     object TabSheet3: TTabSheet
@@ -1116,9 +1139,9 @@ object OptDialog: TOptDialog
         object Label6: TLabel
           Left = 35
           Top = 16
-          Width = 179
+          Width = 194
           Height = 13
-          Caption = 'Code/Carrier-Phase Error Ratio L1/L2'
+          Caption = 'Code/Carrier-Phase Error Ratio L1/L2/L5'
         end
         object Label7: TLabel
           Left = 35
@@ -1144,7 +1167,7 @@ object OptDialog: TOptDialog
         object MeasErrR1: TEdit
           Left = 246
           Top = 14
-          Width = 73
+          Width = 50
           Height = 21
           TabOrder = 0
           Text = '100.0'
@@ -1182,11 +1205,19 @@ object OptDialog: TOptDialog
           Text = '0.100'
         end
         object MeasErrR2: TEdit
-          Left = 321
+          Left = 296
           Top = 14
-          Width = 73
+          Width = 49
           Height = 21
           TabOrder = 5
+          Text = '100.0'
+        end
+        object MeasErrR5: TEdit
+          Left = 344
+          Top = 14
+          Width = 50
+          Height = 21
+          TabOrder = 6
           Text = '100.0'
         end
       end
