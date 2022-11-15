@@ -110,12 +110,10 @@ typedef enum { false, true } bool;
 
 #define P2_10       0.0009765625 /* 2^-10 */
 
-/* max std-dev for valid carrier-phases, current code is unable to correctly 
-   distinguish between Gen8 and Gen9 modules,so use Gen8 values for both */
+/* max std-dev for valid carrier-phases */
 #define MAX_CPSTD_VALID_GEN8 5       /* optimal value for Gen8 modules  */
-#define MAX_CPSTD_VALID_GEN9 5       /* temp value for Gen9 modules   */
-/* #define MAX_CPSTD_VALID_GEN9 8 */ /* optimal value for Gen9 modules  */
-#define CPSTD_SLIP 15           /* std-dev threshold for slip */
+#define MAX_CPSTD_VALID_GEN9 8       /* optimal value for Gen9 modules  */
+#define CPSTD_SLIP 15                /* std-dev threshold for slip */
 
 #define ROUND(x)    (int)floor((x)+0.5)
 
@@ -273,7 +271,7 @@ static int sig_idx(int sys, uint8_t code)
     else if (sys == SYS_QZS) {
         if (code==CODE_L2S) return (nex<1)?-1:NFREQ;   /* L2CM */
         if (code==CODE_L1Z) return (nex<2)?-1:NFREQ+1; /* L1S */
-}
+    }
     return (idx<NFREQ)?idx:-1;
 }
 /* decode UBX-RXM-RAW: raw measurement data ----------------------------------*/
@@ -343,7 +341,7 @@ static int decode_rxmraw(raw_t *raw)
             raw->obs.data[n].L[j]=raw->obs.data[n].P[j]=0.0;
             raw->obs.data[n].D[j]=0.0;
             raw->obs.data[n].SNR[j]=raw->obs.data[n].LLI[j]=0;
-            raw->obs.data[n].qualL[j]=raw->obs.data[n].qualP[j]=0;
+            raw->obs.data[n].Lstd[j]=raw->obs.data[n].Pstd[j]=0;
             raw->obs.data[n].code[j]=CODE_NONE;
         }
         n++;
@@ -360,8 +358,8 @@ static int decode_rxmrawx(raw_t *raw)
     char *q,tstr[64];
     double tow,P,L,D,tn,tadj=0.0,toff=0.0;
     int i,j,k,idx,sys,prn,sat,code,slip,halfv,halfc,LLI,n=0,cpstd_valid,cpstd_slip;
-    int week,nmeas,ver,gnss,svid,sigid,frqid,lockt,cn0,cpstd,prstd,tstat;
-    int multicode=0;
+    int week,nmeas,ver,gnss,svid,sigid,frqid,lockt,cn0,cpstd=0,prstd=0,tstat;
+    int multicode=0, rcvstds=0;
 
     trace(4,"decode_rxmrawx: len=%d\n",raw->len);
     
@@ -396,8 +394,8 @@ static int decode_rxmrawx(raw_t *raw)
     /* max valid std-dev of carrier-phase (-MAX_STD_CP) */
     if ((q=strstr(raw->opt,"-MAX_STD_CP="))) {
         sscanf(q,"-MAX_STD_CP=%d",&cpstd_valid);
-    } 
-    else if (ver>=1) cpstd_valid=MAX_CPSTD_VALID_GEN9;  /* F9P */
+    }
+    else if (raw->rcvtype==1) cpstd_valid=MAX_CPSTD_VALID_GEN9;  /* F9P */
     else cpstd_valid=MAX_CPSTD_VALID_GEN8;  /* M8T, M8P */
 
     /* slip threshold of std-dev of carrier-phase (-STD_SLIP) */
@@ -406,6 +404,8 @@ static int decode_rxmrawx(raw_t *raw)
     } else cpstd_slip=CPSTD_SLIP;
     /* use multiple codes for each freq (-MULTICODE) */
     if ((q=strstr(raw->opt,"-MULTICODE"))) multicode=1;
+    /* write rcvr stdevs to unused rinex fields */
+    if ((q=strstr(raw->opt,"-RCVSTDS"))) rcvstds=1;
 
     /* time tag adjustment */
     if (tadj>0.0) {
@@ -426,9 +426,11 @@ static int decode_rxmrawx(raw_t *raw)
         prstd=U1(p+27)&15; /* pseudorange std-dev */
         cpstd=U1(p+28)&15; /* cpStdev (m) */
         prstd=1<<(prstd>=5?prstd-5:0); /* prstd=2^(x-5) */
+
         tstat=U1(p+30);    /* trkStat */
         if (!(tstat&1)) P=0.0;
         if (!(tstat&2)||L==-0.5||cpstd>cpstd_valid) L=0.0; /* invalid phase */
+        if (sigid>1) raw->rcvtype=1;  /* flag as Gen9 receiver */
 
         if (!(sys=ubx_sys(gnss))) {
             trace(2,"ubx rxmrawx: system error gnss=%d\n", gnss);
@@ -479,9 +481,11 @@ static int decode_rxmrawx(raw_t *raw)
         if (slip) raw->lockflag[sat-1][idx]=slip;
         raw->lockt[sat-1][idx]=lockt*1E-3;
         raw->halfc[sat-1][idx]=halfc;
-        /* LLI: bit1=slip,bit2=half-cycle-invalid TODO:???*/
+        /* LLI: bit1=slip,bit2=half-cycle-invalid ??? */
         LLI=!halfv&&L!=0.0?LLI_HALFC:0;
+        /* set cycle slip if half cycle bit changed state */
         LLI|=halfc!=raw->halfc[sat-1][idx]?1:0;
+        /* set cycle slip flag if first valid phase since slip */
         if (L!=0.0) LLI|=raw->lockflag[sat-1][idx]>0.0?LLI_SLIP:0;
 
         for (j=0;j<n;j++) {
@@ -493,7 +497,7 @@ static int decode_rxmrawx(raw_t *raw)
             raw->obs.data[n].rcv=0;
             for (k=0;k<NFREQ+NEXOBS;k++) {
                 raw->obs.data[n].L[k]=raw->obs.data[n].P[k]=0.0;
-                raw->obs.data[n].qualL[k]=raw->obs.data[n].qualP[k]=0;
+                raw->obs.data[n].Lstd[k]=raw->obs.data[n].Pstd[k]=0;
                 raw->obs.data[n].D[k]=0.0;
                 raw->obs.data[n].SNR[k]=raw->obs.data[n].LLI[k]=0;
                 raw->obs.data[n].code[k]=CODE_NONE;
@@ -504,13 +508,13 @@ static int decode_rxmrawx(raw_t *raw)
         cpstd=cpstd<=9?cpstd:9;  /* limit to 9 to fit RINEX format */
         raw->obs.data[j].L[idx]=L;
         raw->obs.data[j].P[idx]=P;
-        raw->obs.data[j].qualL[idx]=cpstd;
-        raw->obs.data[j].qualP[idx]=prstd;
+        raw->obs.data[j].Lstd[idx]=rcvstds?cpstd:0;
+        raw->obs.data[j].Pstd[idx]=rcvstds?prstd:0;
         raw->obs.data[j].D[idx]=(float)D;
         raw->obs.data[j].SNR[idx]=(uint16_t)(cn0*1.0/SNR_UNIT+0.5);
         raw->obs.data[j].LLI[idx]=(uint8_t)LLI;
         raw->obs.data[j].code[idx]=(uint8_t)code;
-        if (L!=0.0) raw->lockflag[sat-1][idx]=0;
+        if (L!=0.0) raw->lockflag[sat-1][idx]=0; /* clear slip carry-forward flag if valid phase*/
     }
     raw->time=time;
     raw->obs.n=n;
@@ -663,7 +667,7 @@ static int decode_trkmeas(raw_t *raw)
         raw->obs.data[n].D[0]=(float)dop;
         raw->obs.data[n].SNR[0]=(uint16_t)(snr/SNR_UNIT+0.5);
         raw->obs.data[n].code[0]=sys==SYS_CMP?CODE_L2I:CODE_L1C;
-        raw->obs.data[n].qualL[0]=8-qi;
+        raw->obs.data[n].Lstd[0]=8-qi;
         raw->obs.data[n].LLI[0]=raw->lockt[sat-1][1]>0.0?1:0;
         if (sys==SYS_SBS) { /* half-cycle valid */
             raw->obs.data[n].LLI[0]|=lock2>142?0:2;
@@ -681,7 +685,7 @@ static int decode_trkmeas(raw_t *raw)
             raw->obs.data[n].L[j]=raw->obs.data[n].P[j]=0.0;
             raw->obs.data[n].D[j]=0.0;
             raw->obs.data[n].SNR[j]=raw->obs.data[n].LLI[j]=0;
-            raw->obs.data[n].qualL[j]=raw->obs.data[n].qualP[j]=0;
+            raw->obs.data[n].Lstd[j]=raw->obs.data[n].Pstd[j]=0;
             raw->obs.data[n].code[j]=CODE_NONE;
         }
         n++;
@@ -902,7 +906,7 @@ static int decode_enav(raw_t *raw, int sat, int off)
         trace(2,"ubx rxmsfrbx enav length error: sat=%d len=%d\n",sat,raw->len);
         return -1;
     }
-    if (raw->len<44+off) return 0; /* E5b I/NAV */
+    if (raw->len<36+off) return 0; /* E5b I/NAV */
     
     for (i=0;i<8;i++,p+=4) {
         setbitu(buff,32*i,32,U4(p));
@@ -1057,20 +1061,20 @@ static int decode_gnav(raw_t *raw, int sat, int off, int frq)
     
     if (m==4) {
         /* decode GLONASS ephemeris strings */
-    geph.tof=raw->time;
+        geph.tof=raw->time;
         if (!decode_glostr(raw->subfrm[sat-1],&geph,NULL)||geph.sat!=sat) {
             return 0;
         }
-    geph.frq=frq-7;
-    
-    if (!strstr(raw->opt,"-EPHALL")) {
+        geph.frq=frq-7;
+        
+        if (!strstr(raw->opt,"-EPHALL")) {
             if (geph.iode==raw->nav.geph[prn-1].iode) return 0;
-    }
-    raw->nav.geph[prn-1]=geph;
-    raw->ephsat=sat;
+        }
+        raw->nav.geph[prn-1]=geph;
+        raw->ephsat=sat;
         raw->ephset=0;
-    return 2;
-}
+        return 2;
+    }
     else if (m==5) {
         if (!decode_glostr(raw->subfrm[sat-1],NULL,utc_glo)) return 0;
         matcpy(raw->nav.utc_glo,utc_glo,8,1);
@@ -1306,6 +1310,8 @@ static int sync_ubx(uint8_t *buff, uint8_t data)
 *          -TADJ=tint : adjust time tags to multiples of tint (sec)
 *          -STD_SLIP=std: slip by std-dev of carrier phase under std
 *          -MAX_CP_STD=std: max std-dev of carrier phase
+*          -MULTICODE :  preserve multiple signal codes for single freq
+*          -RCVSTDS :  save receiver stdevs to unused rinex fields
 
 *
 *          The supported messages are as follows.

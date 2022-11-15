@@ -59,7 +59,7 @@ extern "C" {
 
 #define VER_RTKLIB  "demo5"             /* library version */
 
-#define PATCH_LEVEL "b34d"               /* patch level */
+#define PATCH_LEVEL "b34g"               /* patch level */
 
 #define COPYRIGHT_RTKLIB \
             "Copyright (C) 2007-2020 T.Takasu\nAll rights reserved."
@@ -409,9 +409,6 @@ extern "C" {
 #define EPHOPT_SSRAPC 3                 /* ephemeris option: broadcast + SSR_APC */
 #define EPHOPT_SSRCOM 4                 /* ephemeris option: broadcast + SSR_COM */
 
-#define WEIGHTOPT_ELEVATION 0           /* weighting option: elevation */
-#define WEIGHTOPT_SNR       1           /* weighting option: snr */  
-
 #define ARMODE_OFF  0                   /* AR mode: off */
 #define ARMODE_CONT 1                   /* AR mode: continuous */
 #define ARMODE_INST 2                   /* AR mode: instantaneous */
@@ -545,7 +542,7 @@ typedef struct {        /* time struct */
 
 typedef struct {        /* observation data record */
     gtime_t time;       /* receiver sampling time (GPST) */
-    uint8_t sat,rcv; /* satellite/receiver number */
+    uint8_t sat,rcv;    /* satellite/receiver number */
     uint16_t SNR[NFREQ+NEXOBS]; /* signal strength (0.001 dBHz) */
     uint8_t  LLI[NFREQ+NEXOBS]; /* loss of lock indicator */
     uint8_t code[NFREQ+NEXOBS]; /* code indicator (CODE_???) */
@@ -555,8 +552,8 @@ typedef struct {        /* observation data record */
     
     int timevalid;      /* time is valid (Valid GNSS fix) for time mark */
     gtime_t eventime;   /* time of event (GPST) */
-    uint8_t qualL[NFREQ+NEXOBS]; /* quality of carrier phase measurement */
-    uint8_t qualP[NFREQ+NEXOBS]; /* quality of pseudorange measurement */
+    uint8_t Lstd[NFREQ+NEXOBS]; /* stdev of carrier phase (0.004 cycles)  */
+    uint8_t Pstd[NFREQ+NEXOBS]; /* stdev of pseudorange (0.01*2^(n+5) meters) */
     uint8_t freq; /* GLONASS frequency channel (0-13) */
 
 } obsd_t;
@@ -997,7 +994,6 @@ typedef struct {        /* processing options type */
     int minholdsats;    /* min sats to hold integer ambiguities */
     int mindropsats;    /* min sats to drop sats in AR */
     int minfix;         /* min fix count to hold ambiguity */
-    int rcvstds;        /* use stdev estimates from receiver to adjust measurement variances */
     int armaxiter;      /* max iteration to resolve ambiguity */
     int ionoopt;        /* ionosphere option (IONOOPT_???) */
     int tropopt;        /* troposphere option (TROPOPT_???) */
@@ -1012,13 +1008,9 @@ typedef struct {        /* processing options type */
     int refpos;         /* base position for relative mode */
                         /* (0:pos in prcopt,  1:average of single pos, */
                         /*  2:read from file, 3:rinex header, 4:rtcm pos) */
-    int weightmode;     /* weighting option (WEIGHTOPT_??) */
     double eratio[NFREQ]; /* code/phase error ratio */
-    double err[6];      /* measurement error factor */
-                        /* [0]:reserved */
-                        /* [1-3]:error factor a/b/c of phase (m) */
-                        /* [4]:doppler frequency (hz) */
-                        /* [5]: snr max value (dB.Hz) */
+    double err[8];      /* observation error terms */
+                        /* [reserved,constant,elevation,baseline,doppler,snr-max,snr, rcv_std] */
     double std[3];      /* initial-state std [0]bias,[1]iono [2]trop */
     double prn[6];      /* process-noise std [0]bias,[1]iono [2]trop [3]acch [4]accv [5] pos */
     double sclkstab;    /* satellite clock stability (sec/sec) */
@@ -1026,11 +1018,11 @@ typedef struct {        /* processing options type */
     double elmaskar;    /* elevation mask of AR for rising satellite (deg) */
     double elmaskhold;  /* elevation mask to hold ambiguity (deg) */
     double thresslip;   /* slip threshold of geometry-free phase (m) */
+    double thresdop;    /* slip threshold of doppler (m) */
     double varholdamb;  /* variance for fix-and-hold psuedo measurements (cycle^2) */
     double gainholdamb; /* gain used for GLO and SBAS sats to adjust ambiguity */
     double maxtdiff;    /* max difference of time (sec) */
-    double maxinno;     /* reject threshold of innovation (m) */
-    double maxgdop;     /* reject threshold of gdop */
+    double maxinno[2];  /* reject threshold of innovation for code and phase (m) */
     double baseline[2]; /* baseline length constraint {const,sigma} (m) */
     double ru[3];       /* rover position for fixed mode {x,y,z} (ecef) (m) */
     double rb[3];       /* base position for relative mode {x,y,z} (ecef) (m) */
@@ -1045,7 +1037,7 @@ typedef struct {        /* processing options type */
     int  posopt[6];     /* positioning options */
     int  syncsol;       /* solution sync mode (0:off,1:on) */
     double odisp[2][6*11]; /* ocean tide loading parameters {rov,base} */
-    int freqopt;        /* disable L2-AR */
+    int  freqopt;       /* disable L2-AR */
     char pppopt[256];   /* ppp option */
 } prcopt_t;
 
@@ -1146,7 +1138,7 @@ typedef struct {        /* satellite status type */
     uint32_t rejc [NFREQ]; /* reject counter */
     double gf[NFREQ-1]; /* geometry-free phase (m) */
     double mw[NFREQ-1]; /* MW-LC (m) */
-    double  phw;        /* phase windup (cycle) */
+    double phw;         /* phase windup (cycle) */
     gtime_t pt[2][NFREQ]; /* previous carrier-phase time */
     double  ph[2][NFREQ]; /* previous carrier-phase observable (cycle) */
 } ssat_t;
@@ -1170,7 +1162,6 @@ typedef struct {        /* RTK control/result type */
     int nfix;           /* number of continuous fixes of ambiguity */
     int excsat;         /* index of next satellite to be excluded for partial ambiguity resolution */
     int nb_ar;          /* number of ambiguities used for AR last epoch */
-	double com_bias;    /* phase bias common between all sats (used to be distributed to all sats */
     char holdamb;       /* set if fix-and-hold has occurred at least once */
     ambc_t ambc[MAXSAT]; /* ambiguity control */
     ssat_t ssat[MAXSAT]; /* satellite status */
@@ -1208,6 +1199,7 @@ typedef struct {        /* receiver raw data control type */
     uint8_t buff[MAXRAWLEN]; /* message buffer */
     char opt[256];      /* receiver dependent options */
     int format;         /* receiver stream format */
+    int rcvtype;        /* receiver type within format */
     void *rcv_data;     /* receiver dependent data */
 } raw_t;
 
@@ -1489,6 +1481,7 @@ EXPORT int ionocorr(gtime_t time, const nav_t *nav, int sat, const double *pos,
                     const double *azel, int ionoopt, double *ion, double *var);
 EXPORT int tropcorr(gtime_t time, const nav_t *nav, const double *pos,
                     const double *azel, int tropopt, double *trp, double *var);
+EXPORT int seliflc(int optnf, int sys);
 
 /* antenna models ------------------------------------------------------------*/
 EXPORT int  readpcv(const char *file, pcvs_t *pcvs);

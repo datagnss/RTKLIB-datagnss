@@ -242,6 +242,7 @@ static int inputobs(obsd_t *obs, int solq, const prcopt_t *popt)
 {
     gtime_t time={0};
     int i,nu,nr,n=0;
+    double dt,dt_next;
     
     trace(3,"\ninfunc  : revs=%d iobsu=%d iobsr=%d isbs=%d\n",revs,iobsu,iobsr,isbs);
     
@@ -254,12 +255,18 @@ static int inputobs(obsd_t *obs, int solq, const prcopt_t *popt)
     if (!revs) { /* input forward data */
         if ((nu=nextobsf(&obss,&iobsu,1))<=0) return -1;
         if (popt->intpref) {
+            /* interpolate nearest timestamps */
             for (;(nr=nextobsf(&obss,&iobsr,2))>0;iobsr+=nr)
                 if (timediff(obss.data[iobsr].time,obss.data[iobsu].time)>-DTTOL) break;
         }
         else {
-            for (i=iobsr;(nr=nextobsf(&obss,&i,2))>0;iobsr=i,i+=nr)
-                if (timediff(obss.data[i].time,obss.data[iobsu].time)>DTTOL) break;
+            /* find closest timestamp */
+            dt=timediff(obss.data[iobsr].time,obss.data[iobsu].time);
+            for (i=iobsr;(nr=nextobsf(&obss,&i,2))>0;iobsr=i,i+=nr) {
+                dt_next=timediff(obss.data[i].time,obss.data[iobsu].time);
+                if (fabs(dt_next)>fabs(dt)) break;
+                dt=dt_next;
+            }
         }
         nr=nextobsf(&obss,&iobsr,2);
         if (nr<=0) {
@@ -287,12 +294,18 @@ static int inputobs(obsd_t *obs, int solq, const prcopt_t *popt)
     else { /* input backward data */
         if ((nu=nextobsb(&obss,&iobsu,1))<=0) return -1;
         if (popt->intpref) {
+            /* interpolate nearest timestamps */
             for (;(nr=nextobsb(&obss,&iobsr,2))>0;iobsr-=nr)
                 if (timediff(obss.data[iobsr].time,obss.data[iobsu].time)<DTTOL) break;
         }
         else {
-            for (i=iobsr;(nr=nextobsb(&obss,&i,2))>0;iobsr=i,i-=nr)
-                if (timediff(obss.data[i].time,obss.data[iobsu].time)<-DTTOL) break;
+            /* find closest timestamp */
+            dt=timediff(obss.data[iobsr].time,obss.data[iobsu].time);
+            for (i=iobsr;(nr=nextobsb(&obss,&i,2))>0;iobsr=i,i-=nr) {
+                dt_next=timediff(obss.data[i].time,obss.data[iobsu].time);
+                if (fabs(dt_next)>fabs(dt)) break;
+                dt=dt_next;
+            }
         }
         nr=nextobsb(&obss,&iobsr,2);
         for (i=0;i<nu&&n<MAXOBS*2;i++) obs[n++]=obss.data[iobsu-nu+1+i];
@@ -500,13 +513,13 @@ static int valcomb(const sol_t *solf, const sol_t *solb)
     }
     return 1;
 }
-/* combine forward/backward solutions and output results ---------------------*/
+/* combine forward/backward solutions and save results ---------------------*/
 static void combres(FILE *fp, FILE *fptm, const prcopt_t *popt, const solopt_t *sopt)
 {
     gtime_t time={0};
     sol_t sols={{0}},sol={{0}},oldsol={{0}},newsol={{0}};
     double tt,Qf[9],Qb[9],Qs[9],rbs[3]={0},rb[3]={0},rr_f[3],rr_b[3],rr_s[3];
-    int i,j,k,solstatic,num=0,pri[]={0,1,2,3,4,5,1,6};
+    int i,j,k,solstatic,num=0,pri[]={7,1,2,3,4,5,1,6};
     
     trace(3,"combres : isolf=%d isolb=%d\n",isolf,isolb);
     
@@ -514,7 +527,6 @@ static void combres(FILE *fp, FILE *fptm, const prcopt_t *popt, const solopt_t *
               (popt->mode==PMODE_STATIC||popt->mode==PMODE_STATIC_START||popt->mode==PMODE_PPP_STATIC);
     
     for (i=0,j=isolb-1;i<isolf&&j>=0;i++,j--) {
-        
         if ((tt=timediff(solf[i].time,solb[j].time))<-DTTOL) {
             sols=solf[i];
             for (k=0;k<3;k++) rbs[k]=rbf[k+i*3];
@@ -525,11 +537,11 @@ static void combres(FILE *fp, FILE *fptm, const prcopt_t *popt, const solopt_t *
             for (k=0;k<3;k++) rbs[k]=rbb[k+j*3];
             i--;
         }
-        else if (solf[i].stat<solb[j].stat) {
+        else if (pri[solf[i].stat]<pri[solb[j].stat]) {
             sols=solf[i];
             for (k=0;k<3;k++) rbs[k]=rbf[k+i*3];
         }
-        else if (solf[i].stat>solb[j].stat) {
+        else if (pri[solf[i].stat]>pri[solb[j].stat]) {
             sols=solb[j];
             for (k=0;k<3;k++) rbs[k]=rbb[k+j*3];
         }
@@ -933,7 +945,7 @@ static void setpcv(gtime_t time, prcopt_t *popt, nav_t *nav, const pcvs_t *pcvs,
         if (!(satsys(i+1,NULL)&popt->navsys)) continue;
         if (!(pcv=searchpcv(i+1,"",time,pcvs))) {
             satno2id(i+1,id);
-            trace(3,"no satellite antenna pcv: %s\n",id);
+            trace(4,"no satellite antenna pcv: %s\n",id);
             continue;
         }
         nav->pcvs[i]=*pcv;

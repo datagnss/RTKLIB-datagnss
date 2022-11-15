@@ -507,7 +507,7 @@ static void decode_obsh(FILE *fp, char *buff, double ver, int *tsys,
             nav->utc_gps[6]=str2num(buff,18,6);
         }
     }
-    else if (strstr(label,"# OF SALTELLITES"    )) { /* opt */
+    else if (strstr(label,"# OF SATELLITES"    )) { /* opt */
         /* skip */ ;
     }
     else if (strstr(label,"PRN / # OF OBS"      )) { /* opt */
@@ -767,9 +767,9 @@ static int decode_obsdata(FILE *fp, char *buff, double ver, int mask,
     sigind_t *ind;
     double val[MAXOBSTYPE]={0};
     uint8_t lli[MAXOBSTYPE]={0};
-    uint8_t qual[MAXOBSTYPE]={0};
+    uint8_t std[MAXOBSTYPE]={0};
     char satid[8]="";
-    int i,j,n,m,stat=1,p[MAXOBSTYPE],k[16],l[16];
+    int i,j,n,m,q,stat=1,p[MAXOBSTYPE],k[16],l[16],r[16];
     
     trace(4,"decode_obsdata: ver=%.2f\n",ver);
     
@@ -803,23 +803,24 @@ static int decode_obsdata(FILE *fp, char *buff, double ver, int mask,
         if (stat) {
             val[i]=str2num(buff,j,14)+ind->shift[i];
             lli[i]=(uint8_t)str2num(buff,j+14,1)&3;
-            /* signal quality from receiver */
-            qual[i]=(uint8_t)str2num(buff,j+15,1);
+            /* measurement std from receiver */
+            std[i]=(uint8_t)str2num(buff,j+15,1);
         }
     }
     if (!stat) return 0;
     
     for (i=0;i<NFREQ+NEXOBS;i++) {
         obs->P[i]=obs->L[i]=0.0; obs->D[i]=0.0f;
-        obs->SNR[i]=obs->LLI[i]=obs->qualL[i]=obs->qualP[i]=obs->code[i]=0;
+        obs->SNR[i]=obs->LLI[i]=obs->Lstd[i]=obs->Pstd[i]=obs->code[i]=0;
     }
     /* assign position in observation data */
-    for (i=n=m=0;i<ind->n;i++) {
+    for (i=n=m=q=0;i<ind->n;i++) {
         
         p[i]=ind->idx[i];
         
         if (ind->type[i]==0&&p[i]==0) k[n++]=i; /* C1? index */
         if (ind->type[i]==0&&p[i]==1) l[m++]=i; /* C2? index */
+        if (ind->type[i]==0&&p[i]==2) r[q++]=i; /* C3? index */
     }
         
     /* if multiple codes (C1/P1,C2/P2), select higher priority */
@@ -857,21 +858,40 @@ static int decode_obsdata(FILE *fp, char *buff, double ver, int mask,
             p[l[0]]=1; p[l[1]]=NEXOBS<2?-1:NFREQ+1;
         }
     }
+    if (q>=2) {
+        if (val[r[0]]==0.0&&val[r[1]]==0.0) {
+            p[r[0]]=-1; p[r[1]]=-1;
+        }
+        else if (val[r[0]]!=0.0&&val[r[1]]==0.0) {
+            p[r[0]]=2; p[r[1]]=-1;
+        }
+        else if (val[r[0]]==0.0&&val[r[1]]!=0.0) {
+            p[r[0]]=-1; p[r[1]]=2;
+        }
+        else if (ind->pri[r[1]]>ind->pri[r[0]]) {
+            p[r[1]]=2; p[r[0]]=NEXOBS<3?-1:NFREQ+2;
+        }
+        else {
+            p[r[0]]=2; p[r[1]]=NEXOBS<3?-1:NFREQ+2;
+        }
+    }
     /* save observation data */
     for (i=0;i<ind->n;i++) {
         if (p[i]<0||(val[i]==0.0&&lli[i]==0)) continue;
         switch (ind->type[i]) {
             case 0: obs->P[p[i]]=val[i];
                     obs->code[p[i]]=ind->code[i];
-                    obs->qualP[p[i]]=qual[i]>0?qual[i]:1;
+                    obs->Pstd[p[i]]=std[i]>0?std[i]:1;
                     break;
             case 1: obs->L[p[i]]=val[i];
                     obs->LLI[p[i]]=lli[i];
-                    obs->qualL[p[i]]=qual[i]>0?qual[i]:1;
+                    obs->Lstd[p[i]]=std[i]>0?std[i]:1;
                     break;
             case 2: obs->D[p[i]]=(float)val[i];                     break;
             case 3: obs->SNR[p[i]]=(uint16_t)(val[i]/SNR_UNIT+0.5); break;
         }
+        trace(4, "obs: i=%d f=%d P=%10.3f L=%10.3f LLI=%d code=%d\n",i,p[i],obs->P[p[i]],
+        obs->L[p[i]],obs->LLI[p[i]],obs->code[p[i]]);
     }
     trace(4,"decode_obsdata: time=%s sat=%2d\n",time_str(obs->time,0),obs->sat);
     return 1;
@@ -993,7 +1013,7 @@ static void set_index(double ver, int sys, const char *opt,
     /* list rejected observation types */
     for (i=0;i<n;i++) {
         if (!ind->code[i]||!ind->pri[i]||ind->pos[i]>=0) continue;
-        trace(3,"reject obs type: sys=%2d, obs=%s\n",sys,tobs[i]);
+        trace(4,"reject obs type: sys=%2d, obs=%s\n",sys,tobs[i]);
     }
     ind->n=n;
     
@@ -1135,7 +1155,7 @@ static int decode_eph(double ver, int sat, gtime_t toc, const double *data,
     sys=satsys(sat,NULL);
     
     if (!(sys&(SYS_GPS|SYS_GAL|SYS_QZS|SYS_CMP|SYS_IRN))) {
-        trace(3,"ephemeris error: invalid satellite sat=%2d\n",sat);
+        trace(4,"ephemeris error: invalid satellite sat=%2d\n",sat);
         return 0;
     }
     *eph=eph0;
@@ -1245,7 +1265,7 @@ static int decode_geph(double ver, int sat, gtime_t toc, double *data,
     trace(4,"decode_geph: ver=%.2f sat=%2d\n",ver,sat);
     
     if (satsys(sat,NULL)!=SYS_GLO) {
-        trace(3,"glonass ephemeris error: invalid satellite sat=%2d\n",sat);
+        trace(4,"glonass ephemeris error: invalid satellite sat=%2d\n",sat);
         return 0;
     }
     *geph=geph0;
@@ -1300,7 +1320,7 @@ static int decode_seph(double ver, int sat, gtime_t toc, double *data,
     trace(4,"decode_seph: ver=%.2f sat=%2d\n",ver,sat);
     
     if (satsys(sat,NULL)!=SYS_SBS) {
-        trace(3,"geo ephemeris error: invalid satellite sat=%2d\n",sat);
+        trace(4,"geo ephemeris error: invalid satellite sat=%2d\n",sat);
         return 0;
     }
     *seph=seph0;
@@ -2149,7 +2169,7 @@ extern int outrnxobsh(FILE *fp, const rnxopt_t *opt, const nav_t *nav)
     return fprintf(fp,"%-60.60s%-20s\n","","END OF HEADER")!=EOF;
 }
 /* output observation data field ---------------------------------------------*/
-static void outrnxobsf(FILE *fp, double obs, int lli, int qual)
+static void outrnxobsf(FILE *fp, double obs, int lli, int std)
 {
     if (obs==0.0) { 
         fprintf(fp,"              ");
@@ -2163,7 +2183,7 @@ static void outrnxobsf(FILE *fp, double obs, int lli, int qual)
     else {
         fprintf(fp,"%1.1d",lli&(LLI_SLIP|LLI_HALFC|LLI_BOCTRK));
     }
-    if (qual<=0) fprintf(fp," "); else fprintf(fp,"%1.1x",qual);
+    if (std<=0) fprintf(fp," "); else fprintf(fp,"%1.1x",std);
 }
 /* search observation data index -------------------------------------------*/
 static int obsindex(int rnxver, int sys, const uint8_t *code, const char *tobs,
@@ -2338,8 +2358,8 @@ extern int outrnxobsb(FILE *fp, const rnxopt_t *opt, const obsd_t *obs, int n,
             /* output field */
             switch (opt->tobs[m][j][0]) {
                 case 'C':
-                case 'P': outrnxobsf(fp,obs[ind[i]].P[k],-1,obs[ind[i]].qualP[k]); break;
-                case 'L': outrnxobsf(fp,obs[ind[i]].L[k]+dL,obs[ind[i]].LLI[k],obs[ind[i]].qualL[k]); break;
+                case 'P': outrnxobsf(fp,obs[ind[i]].P[k],-1,obs[ind[i]].Pstd[k]); break;
+                case 'L': outrnxobsf(fp,obs[ind[i]].L[k]+dL,obs[ind[i]].LLI[k],obs[ind[i]].Lstd[k]); break;
                 case 'D': outrnxobsf(fp,obs[ind[i]].D[k],-1,-1); break;
                 case 'S': outrnxobsf(fp,obs[ind[i]].SNR[k]*SNR_UNIT,-1,-1); break;
             }
@@ -2351,9 +2371,9 @@ extern int outrnxobsb(FILE *fp, const rnxopt_t *opt, const obsd_t *obs, int n,
             trace(1,",%16.2f,%3d,%13.2f,%13.2f,%9.2f,%2.0f,%1d,%1d,%13.2f,%13.2f,%9.2f,%2.0f,%1d,%1d\n",
                 obs[0].time.time + obs[0].time.sec, obs[ind[i]].sat,
                 obs[ind[i]].P[0], obs[ind[i]].L[0], obs[ind[i]].D[0],
-                obs[ind[i]].SNR[0]*0.25, obs[ind[i]].LLI[0], obs[ind[i]].qualL[0],
+                obs[ind[i]].SNR[0]*SNR_UNIT, obs[ind[i]].LLI[0], obs[ind[i]].Lstd[0],
                 obs[ind[i]].P[1], obs[ind[i]].L[1], obs[ind[i]].D[1],
-                obs[ind[i]].SNR[1]*0.25, obs[ind[i]].LLI[1], obs[ind[i]].qualL[1]);
+                obs[ind[i]].SNR[1]*SNR_UNIT, obs[ind[i]].LLI[1], obs[ind[i]].Lstd[1]);
         }
 #endif
 
