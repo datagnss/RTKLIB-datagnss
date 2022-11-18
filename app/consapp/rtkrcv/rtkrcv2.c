@@ -434,7 +434,7 @@ static void readant2(prcopt_t *opt, nav_t *nav)
             opt->pcvr[i]=*pcv;
         }
     }
-    else tracenav(2,"antenna file open error %s",filopt.rcvantp);
+    else trace(2,"antenna file open error %s",filopt.rcvantp);
     
     if (readpcv(filopt.satantp,&pcvs)) {
         for (i=0;i<MAXSAT;i++) {
