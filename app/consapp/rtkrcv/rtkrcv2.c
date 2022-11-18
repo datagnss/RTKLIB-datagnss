@@ -91,7 +91,7 @@ static stream_t moni;                   /* monitor stream */
 
 static int intflg       =0;             /* interrupt flag (2:shtdown) */
 
-static char passwd[MAXSTR]="admin";     /* login password */
+static char passwd[MAXSTR]="";     /* login password */
 static int timetype     =0;             /* time format (0:gpst,1:utc,2:jst,3:tow) */
 static int soltype      =0;             /* sol format (0:dms,1:deg,2:xyz,3:enu,4:pyl) */
 static int solflag      =2;             /* sol flag (1:std+2:age/ratio/ns) */
@@ -189,7 +189,7 @@ static const char *pathopts[]={         /* path options help */
 #define SOLOPT  "0:llh,1:xyz,2:enu,3:nmea,4:stat"
 #define MSGOPT  "0:all,1:rover,2:base,3:corr"
 
-static opt_t rcvopts[]={
+static opt_t rcvopts2[]={
     {"inpstr2-path",    2,  (void *)strpath [1],         ""     },
     {"inpstr2-nmeareq", 3,  (void *)&nmeareq,            NMEOPT },
     {"inpstr2-nmealat", 1,  (void *)&nmeapos[0],         "deg"  },
@@ -202,6 +202,57 @@ static opt_t rcvopts[]={
     {"logstr1-path",    2,  (void *)strpath [5],         ""     },
     {"logstr2-path",    2,  (void *)strpath [6],         ""     },
     {"logstr3-path",    2,  (void *)strpath [7],         ""     },
+    
+    {"",0,NULL,""}
+};
+
+static opt_t rcvopts[]={
+    {"console-passwd",  2,  (void *)passwd,              ""     },
+    {"console-timetype",3,  (void *)&timetype,           TIMOPT },
+    {"console-soltype", 3,  (void *)&soltype,            CONOPT },
+    {"console-solflag", 0,  (void *)&solflag,            FLGOPT },
+    
+    {"inpstr1-type",    3,  (void *)&strtype[0],         ISTOPT },
+    {"inpstr2-type",    3,  (void *)&strtype[1],         ISTOPT },
+    {"inpstr3-type",    3,  (void *)&strtype[2],         ISTOPT },
+    {"inpstr1-path",    2,  (void *)strpath [0],         ""     },
+    {"inpstr2-path",    2,  (void *)strpath [1],         ""     },
+    {"inpstr3-path",    2,  (void *)strpath [2],         ""     },
+    {"inpstr1-format",  3,  (void *)&strfmt [0],         FMTOPT },
+    {"inpstr2-format",  3,  (void *)&strfmt [1],         FMTOPT },
+    {"inpstr3-format",  3,  (void *)&strfmt [2],         FMTOPT },
+    {"inpstr2-nmeareq", 3,  (void *)&nmeareq,            NMEOPT },
+    {"inpstr2-nmealat", 1,  (void *)&nmeapos[0],         "deg"  },
+    {"inpstr2-nmealon", 1,  (void *)&nmeapos[1],         "deg"  },
+    {"inpstr2-nmeahgt", 1,  (void *)&nmeapos[2],         "m"    },
+    {"outstr1-type",    3,  (void *)&strtype[3],         OSTOPT },
+    {"outstr2-type",    3,  (void *)&strtype[4],         OSTOPT },
+    {"outstr1-path",    2,  (void *)strpath [3],         ""     },
+    {"outstr2-path",    2,  (void *)strpath [4],         ""     },
+    {"outstr1-format",  3,  (void *)&strfmt [3],         SOLOPT },
+    {"outstr2-format",  3,  (void *)&strfmt [4],         SOLOPT },
+    {"logstr1-type",    3,  (void *)&strtype[5],         OSTOPT },
+    {"logstr2-type",    3,  (void *)&strtype[6],         OSTOPT },
+    {"logstr3-type",    3,  (void *)&strtype[7],         OSTOPT },
+    {"logstr1-path",    2,  (void *)strpath [5],         ""     },
+    {"logstr2-path",    2,  (void *)strpath [6],         ""     },
+    {"logstr3-path",    2,  (void *)strpath [7],         ""     },
+    
+    {"misc-svrcycle",   0,  (void *)&svrcycle,           "ms"   },
+    {"misc-timeout",    0,  (void *)&timeout,            "ms"   },
+    {"misc-reconnect",  0,  (void *)&reconnect,          "ms"   },
+    {"misc-nmeacycle",  0,  (void *)&nmeacycle,          "ms"   },
+    {"misc-buffsize",   0,  (void *)&buffsize,           "bytes"},
+    {"misc-navmsgsel",  3,  (void *)&navmsgsel,          MSGOPT },
+    {"misc-proxyaddr",  2,  (void *)proxyaddr,           ""     },
+    {"misc-fswapmargin",0,  (void *)&fswapmargin,        "s"    },
+    
+    {"misc-startcmd",   2,  (void *)startcmd,            ""     },
+    {"misc-stopcmd",    2,  (void *)stopcmd,             ""     },
+    
+    {"file-cmdfile1",   2,  (void *)rcvcmds[0],          ""     },
+    {"file-cmdfile2",   2,  (void *)rcvcmds[1],          ""     },
+    {"file-cmdfile3",   2,  (void *)rcvcmds[2],          ""     },
     
     {"",0,NULL,""}
 };
@@ -1623,9 +1674,11 @@ int main(int argc, char **argv)
     if (!*file) sprintf(file,"%s/%s",OPTSDIR,OPTSFILE);
     
     resetsysopts();
+
     if (!loadopts(file,rcvopts)||!loadopts(file,sysopts)) {
         fprintf(stderr,"no options file: %s. defaults used\n",file);
     }
+    
     getsysopts(&prcopt,solopt,&filopt);
     
     /* read navigation data */
