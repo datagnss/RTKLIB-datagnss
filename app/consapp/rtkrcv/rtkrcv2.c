@@ -654,34 +654,7 @@ static void stopsvr(vt_t *vt)
     vt_printf(vt,"stop rtk server\n");
 }
 
-static void stopsvr2()
-{
-    char s[3][MAXRCVCMD]={"","",""},*cmds[]={NULL,NULL,NULL};
-    int i,ret;
-    
-    trace(3,"stopsvr:\n");
-    
-    if (!svr.state) return;
-    
-    /* read stop commads from command files */
-    for (i=0;i<3;i++) {
-        if (!*rcvcmds[i]) continue;
-        if (!readcmd(rcvcmds[i],s[i],1)) {
-            trace(2,"no command file: %s\n",rcvcmds[i]);
-        }
-        else cmds[i]=s[i];
-    }
-    /* stop rtk server */
-    rtksvrstop(&svr,cmds);
-    
-    /* execute stop command */
-    if (*stopcmd&&(ret=system(stopcmd))) {
-        trace(2,"command exec error: %s (%d)\n",stopcmd,ret);
-    }
-    if (solopt[0].geoid>0) closegeoid();
-    
-    trace(2,"stop rtk server\n");
-}
+
 
 /* print time ----------------------------------------------------------------*/
 static void prtime(vt_t *vt, gtime_t time)
@@ -1880,7 +1853,7 @@ int main(int argc, char **argv)
     }
 
     fprintf(stderr,"rtk server start...\n");
-    if (!startsvr2()) return -1;
+    if (!startsvr(NULL)) return -1;
    
     signal(SIGINT, Stop); /* keyboard interrupt */
    
