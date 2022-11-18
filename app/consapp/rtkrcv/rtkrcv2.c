@@ -530,7 +530,7 @@ static int startsvr2()
     }
     /* confirm overwrite */
     for (i=3;i<8;i++) {
-        if (strtype[i]==STR_FILE&&!confwrite(vt,strpath[i])) return 0;
+        if (strtype[i]==STR_FILE) return 0;
     }
     if (prcopt.refpos==4) { /* rtcm */
         for (i=0;i<3;i++) prcopt.rb[i]=0.0;
