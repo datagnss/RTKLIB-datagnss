@@ -1708,7 +1708,7 @@ void Stop(int sig)
         intflg=1;
     else
         signal(SIGINT, Stop);
-    getchar(); // Get new line character
+    getchar(); 
 }
 
 /* rtkrcv main -----------------------------------------------------------------
