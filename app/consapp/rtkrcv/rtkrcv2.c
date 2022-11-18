@@ -61,7 +61,7 @@
 #define MAXSTR      1024                /* max length of a stream */
 #define OPTSDIR     "/data/rtk"                 /* default config directory */
 #define OPTSFILE    "rtkrcv.conf"       /* default config file */
-#define NAVIFILE    "rtkrcv.nav"        /* navigation save file */
+#define NAVIFILE    "/data/rtk/rtkrcv.nav"        /* navigation save file */
 #define STATFILE    "rtkrcv_%Y%m%d%h%M.stat"  /* solution status file */
 #define TRACEFILE   "rtkrcv_%Y%m%d%h%M.trace" /* debug trace file */
 #define INTKEEPALIVE 1000               /* keep alive interval (ms) */
