@@ -1701,18 +1701,9 @@ void Stop(int signo)
 {
     printf("oops! stop!\n");
 
-    /* stop rtk server */
-    
-    stopsvr(NULL);
-    
-    if (moniport>0) closemoni();
-    if (outstat>0) rtkclosestat();
-    
-    /* save navigation data */
-    if (!savenav(NAVIFILE,&svr.nav)) {
-        fprintf(stderr,"navigation data save error: %s\n",NAVIFILE);
-    }
-    traceclose();
+    intflg=1;
+
+   
     _exit(0);
 }
 
@@ -1871,6 +1862,25 @@ int main(int argc, char **argv)
    
     signal(SIGINT, Stop); /* keyboard interrupt */
 
+    while (!intflg) {
+        sleepms(100);
+    }
+
+    /* stop rtk server */
+    stopsvr(NULL);
+    
+    /* close consoles */
+    for (i=0;i<MAXCON;i++) {
+        con_close(con[i]);
+    }
+    if (moniport>0) closemoni();
+    if (outstat>0) rtkclosestat();
+    
+    /* save navigation data */
+    if (!savenav(NAVIFILE,&svr.nav)) {
+        fprintf(stderr,"navigation data save error: %s\n",NAVIFILE);
+    }
+    traceclose();
     
     return 0;
 }
