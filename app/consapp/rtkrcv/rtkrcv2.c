@@ -1695,6 +1695,27 @@ static void accept_sock(int ssock, con_t **con)
     trace(2,"remote console connection refused. addr=%s\n",
          inet_ntoa(addr.sin_addr));
 }
+
+int outstat=0;
+void Stop(int signo)
+{
+    printf("oops! stop!\n")
+
+    /* stop rtk server */
+    
+    stopsvr(NULL);
+    
+    if (moniport>0) closemoni();
+    if (outstat>0) rtkclosestat();
+    
+    /* save navigation data */
+    if (!savenav(NAVIFILE,&svr.nav)) {
+        fprintf(stderr,"navigation data save error: %s\n",NAVIFILE);
+    }
+    traceclose();
+    _exit(0);
+}
+
 /* rtkrcv main -----------------------------------------------------------------
 * sysnopsis
 *     rtkrcv [-s][-p port][-d dev][-o file][-r level][-t level][-sta sta]
@@ -1802,7 +1823,7 @@ static void accept_sock(int ssock, con_t **con)
 int main(int argc, char **argv)
 {
     con_t *con[MAXCON]={0};
-    int i,outstat=0,trace=0,sock=0;
+    int i,trace=0,sock=0;
     char *dev="",file[MAXSTR]="";
     
     for (i=1;i<argc;i++) {
@@ -1846,25 +1867,10 @@ int main(int argc, char **argv)
     }
 
     
-    if (start&&!startsvr2()) return -1;
+    if (!startsvr2()) return -1;
    
-    signal(SIGINT, sigshut); /* keyboard interrupt */
-    signal(SIGTERM,sigshut); /* external shutdown signal */
-    signal(SIGUSR2,sigshut);
-    signal(SIGHUP ,SIG_IGN);
-    signal(SIGPIPE,SIG_IGN);
+    signal(SIGINT, Stop); /* keyboard interrupt */
 
     
-    /* stop rtk server */
-    stopsvr(NULL);
-    
-    if (moniport>0) closemoni();
-    if (outstat>0) rtkclosestat();
-    
-    /* save navigation data */
-    if (!savenav(NAVIFILE,&svr.nav)) {
-        fprintf(stderr,"navigation data save error: %s\n",NAVIFILE);
-    }
-    traceclose();
     return 0;
 }
