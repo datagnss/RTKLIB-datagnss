@@ -1880,8 +1880,8 @@ int main(int argc, char **argv)
     signal(SIGINT, Stop); /* keyboard interrupt */
    
     while (!intflg) {
-        Stop2();
         sleepms(100);
+        Stop2();
     }
 
     /* stop rtk server */
