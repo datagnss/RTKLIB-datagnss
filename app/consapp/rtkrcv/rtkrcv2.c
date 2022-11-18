@@ -499,6 +499,93 @@ static int startsvr(vt_t *vt)
     }
     return 1;
 }
+
+static int startsvr2()
+{
+    static sta_t sta[MAXRCV]={{""}};
+    double pos[3],npos[3];
+    char s1[3][MAXRCVCMD]={"","",""},*cmds[]={NULL,NULL,NULL};
+    char s2[3][MAXRCVCMD]={"","",""},*cmds_periodic[]={NULL,NULL,NULL};
+    char *ropts[]={"","",""};
+    char *paths[]={
+        strpath[0],strpath[1],strpath[2],strpath[3],strpath[4],strpath[5],
+        strpath[6],strpath[7]
+    };
+    char errmsg[2048]="";
+    int i,ret,stropt[8]={0};
+    
+    trace(3,"startsvr:\n");
+    
+    /* read start commads from command files */
+    for (i=0;i<3;i++) {
+        if (!*rcvcmds[i]) continue;
+        if (!readcmd(rcvcmds[i],s1[i],0)) {
+            trace(2,"no command file: %s\n",rcvcmds[i]);
+        }
+        else cmds[i]=s1[i];
+        if (!readcmd(rcvcmds[i],s2[i],2)) {
+            trace(2,"no command file: %s\n",rcvcmds[i]);
+        }
+        else cmds_periodic[i]=s2[i];
+    }
+    /* confirm overwrite */
+    for (i=3;i<8;i++) {
+        if (strtype[i]==STR_FILE&&!confwrite(vt,strpath[i])) return 0;
+    }
+    if (prcopt.refpos==4) { /* rtcm */
+        for (i=0;i<3;i++) prcopt.rb[i]=0.0;
+    }
+    pos[0]=nmeapos[0]*D2R;
+    pos[1]=nmeapos[1]*D2R;
+    pos[2]=nmeapos[2];
+    pos2ecef(pos,npos);
+    
+    /* read antenna file */
+    readant(vt,&prcopt,&svr.nav);
+    
+    /* read dcb file */
+    if (*filopt.dcb) {
+        strcpy(sta[0].name,sta_name);
+        readdcb(filopt.dcb,&svr.nav,sta);
+    }
+    /* open geoid data file */
+    if (solopt[0].geoid>0&&!opengeoid(solopt[0].geoid,filopt.geoid)) {
+        trace(2,"geoid data open error: %s\n",filopt.geoid);
+    }
+    for (i=0;*rcvopts[i].name;i++) modflgr[i]=0;
+    for (i=0;*sysopts[i].name;i++) modflgs[i]=0;
+    
+    /* set stream options */
+    stropt[0]=timeout;
+    stropt[1]=reconnect;
+    stropt[2]=1000;
+    stropt[3]=buffsize;
+    stropt[4]=fswapmargin;
+    strsetopt(stropt);
+    
+    if (strfmt[2]==8) strfmt[2]=STRFMT_SP3;
+    
+    /* set ftp/http directory and proxy */
+    strsetdir(filopt.tempdir);
+    strsetproxy(proxyaddr);
+    
+    /* execute start command */
+    if (*startcmd&&(ret=system(startcmd))) {
+        trace(2,"command exec error: %s (%d)\n",startcmd,ret);
+    }
+    solopt[0].posf=strfmt[3];
+    solopt[1].posf=strfmt[4];
+    
+    /* start rtk server */
+    if (!rtksvrstart(&svr,svrcycle,buffsize,strtype,paths,strfmt,navmsgsel,
+                     cmds,cmds_periodic,ropts,nmeacycle,nmeareq,npos,&prcopt,
+                     solopt,&moni,errmsg)) {
+        trace(2,"rtk server start error (%s)\n",errmsg);
+        return 0;
+    }
+    return 1;
+}
+
 /* stop rtk server -----------------------------------------------------------*/
 static void stopsvr(vt_t *vt)
 {
@@ -529,6 +616,36 @@ static void stopsvr(vt_t *vt)
     
     vt_printf(vt,"stop rtk server\n");
 }
+
+static void stopsvr2()
+{
+    char s[3][MAXRCVCMD]={"","",""},*cmds[]={NULL,NULL,NULL};
+    int i,ret;
+    
+    trace(3,"stopsvr:\n");
+    
+    if (!svr.state) return;
+    
+    /* read stop commads from command files */
+    for (i=0;i<3;i++) {
+        if (!*rcvcmds[i]) continue;
+        if (!readcmd(rcvcmds[i],s[i],1)) {
+            trace(2,"no command file: %s\n",rcvcmds[i]);
+        }
+        else cmds[i]=s[i];
+    }
+    /* stop rtk server */
+    rtksvrstop(&svr,cmds);
+    
+    /* execute stop command */
+    if (*stopcmd&&(ret=system(stopcmd))) {
+        trace(2,"command exec error: %s (%d)\n",stopcmd,ret);
+    }
+    if (solopt[0].geoid>0) closegeoid();
+    
+    trace(2,"stop rtk server\n");
+}
+
 /* print time ----------------------------------------------------------------*/
 static void prtime(vt_t *vt, gtime_t time)
 {
@@ -1692,7 +1809,7 @@ int main(int argc, char **argv)
     }
 
     
-    if (start&&!startsvr(&vt)) return -1;
+    if (start&&!startsvr2()) return -1;
    
     signal(SIGINT, sigshut); /* keyboard interrupt */
     signal(SIGTERM,sigshut); /* external shutdown signal */
