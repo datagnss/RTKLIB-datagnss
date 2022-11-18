@@ -1652,9 +1652,8 @@ int main(int argc, char **argv)
     char *dev="",file[MAXSTR]="";
     
     for (i=1;i<argc;i++) {
-        if      (!strcmp(argv[i],"-s")) start=1;
-        else if (!strcmp(argv[i],"-d")&&i+1<argc) dev=argv[++i];
-        else if (!strcmp(argv[i],"-o")&&i+1<argc) strcpy(file,argv[++i]);
+  
+        if (!strcmp(argv[i],"-o")&&i+1<argc) strcpy(file,argv[++i]);
         else if (!strcmp(argv[i],"-w")&&i+1<argc) strcpy(passwd,argv[++i]);
         else if (!strcmp(argv[i],"-r")&&i+1<argc) outstat=atoi(argv[++i]);
         else if (!strcmp(argv[i],"-t")&&i+1<argc) trace=atoi(argv[++i]);
@@ -1691,44 +1690,20 @@ int main(int argc, char **argv)
     if (moniport>0&&!openmoni(moniport)) {
         fprintf(stderr,"monitor port open error: %d\n",moniport);
     }
-    if (telnetport) {
-        /* open socket for remote console */
-        if ((sock=open_sock(telnetport))<=0) {
-            fprintf(stderr,"console open error port=%d\n",telnetport);
-            if (moniport>0) closemoni();
-            if (outstat>0) rtkclosestat();
-            traceclose();
-            return -1;
-        }
-    }
-    else {
-        /* open device for local console */
-        if (!(con[0]=con_open(0,dev))) {
-            fprintf(stderr,"console open error dev=%s\n",dev);
-            if (moniport>0) closemoni();
-            if (outstat>0) rtkclosestat();
-            traceclose();
-            return -1;
-        }
-    }
+
+    
+    if (start&&!startsvr(&vt)) return -1;
+   
     signal(SIGINT, sigshut); /* keyboard interrupt */
     signal(SIGTERM,sigshut); /* external shutdown signal */
     signal(SIGUSR2,sigshut);
     signal(SIGHUP ,SIG_IGN);
     signal(SIGPIPE,SIG_IGN);
 
-    while (!intflg) {
-        /* accept remote console connection */
-        accept_sock(sock,con);
-        sleepms(100);
-    }
+    
     /* stop rtk server */
     stopsvr(NULL);
     
-    /* close consoles */
-    for (i=0;i<MAXCON;i++) {
-        con_close(con[i]);
-    }
     if (moniport>0) closemoni();
     if (outstat>0) rtkclosestat();
     
