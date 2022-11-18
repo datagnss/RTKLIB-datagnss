@@ -52,6 +52,8 @@
 #include "rtklib.h"
 #include "vt.h"
 
+// test
+
 #define PRGNAME     "rtkrcv"            /* program name */
 #define CMDPROMPT   "rtkrcv> "          /* command prompt */
 #define MAXCON      32                  /* max number of consoles */
