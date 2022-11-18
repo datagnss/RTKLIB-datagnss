@@ -52,7 +52,6 @@
 #include "rtklib.h"
 #include "vt.h"
 
-// test
 
 #define PRGNAME     "rtkrcv"            /* program name */
 #define CMDPROMPT   "rtkrcv> "          /* command prompt */
@@ -1678,7 +1677,7 @@ int main(int argc, char **argv)
     if (!loadopts(file,rcvopts)||!loadopts(file,sysopts)) {
         fprintf(stderr,"no options file: %s. defaults used\n",file);
     }
-    
+
     getsysopts(&prcopt,solopt,&filopt);
     
     /* read navigation data */
