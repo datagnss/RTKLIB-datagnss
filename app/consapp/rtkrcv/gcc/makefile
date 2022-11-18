@@ -19,11 +19,11 @@ rtkrcv     : tides.o septentrio.o swiftnav.o
 
 
 rtkrcv.o   : ../rtkrcv.c
-	$(CC) -c $(CFLAGS) ../rtkrcv.c
+	$(CC) -c $(CFLAGS) ../rtkrcv2.c
 vt.o       : ../vt.c
 	$(CC) -c $(CFLAGS) ../vt.c
 rtkcmn.o   : $(SRC)/rtkcmn.c
-	$(CC) -c $(CFLAGS) $(SRC)/rtkcmn.c
+	$(CC) -c $(CFLAGS) $(SRC)/rtkcmn2.c
 rtksvr.o   : $(SRC)/rtksvr.c
 	$(CC) -c $(CFLAGS) $(SRC)/rtksvr.c
 rtkpos.o   : $(SRC)/rtkpos.c
@@ -51,7 +51,7 @@ rtcm3e.o   : $(SRC)/rtcm3e.c
 preceph.o  : $(SRC)/preceph.c
 	$(CC) -c $(CFLAGS) $(SRC)/preceph.c
 options.o  : $(SRC)/options.c
-	$(CC) -c $(CFLAGS) $(SRC)/options.c
+	$(CC) -c $(CFLAGS) $(SRC)/options2.c
 pntpos.o   : $(SRC)/pntpos.c
 	$(CC) -c $(CFLAGS) $(SRC)/pntpos.c
 ppp.o      : $(SRC)/ppp.c
