@@ -12,7 +12,7 @@ LDLIBS  = -lm -lrt -lpthread
 
 all        : rtkrcv
 rtkrcv     : rtkrcv2.o vt.o rtkcmn2.o rtksvr.o rtkpos.o geoid.o solution.o lambda.o
-rtkrcv     : sbas.o stream.o rcvraw.o rtcm.o preceph.o optionss.o pntpos.o ppp.o ppp_ar.o
+rtkrcv     : sbas.o stream.o rcvraw.o rtcm.o preceph.o options2.o pntpos.o ppp.o ppp_ar.o
 rtkrcv     : novatel.o ublox.o crescent.o skytraq.o javad.o nvs.o binex.o
 rtkrcv     : rt17.o ephemeris.o rinex.o ionex.o rtcm2.o rtcm3.o rtcm3e.o
 rtkrcv     : tides.o septentrio.o swiftnav.o
