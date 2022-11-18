@@ -1714,12 +1714,12 @@ void Stop(int sig)
 
 void Stop2()
 {
-    int c;
+    char c;
     FILE *file;
     file = fopen("/home/linaro/.rtkstatus", "r");
     if (file) {
       c = getc(file);
-      if ( c == "1" ) intflg=1;
+      if ( c == '1' ) intflg=1;
       fclose(file);
     }
 }
