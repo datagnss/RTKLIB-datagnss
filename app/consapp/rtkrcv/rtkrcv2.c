@@ -1708,7 +1708,20 @@ void Stop(int sig)
         intflg=1;
     else
         signal(SIGINT, Stop);
+    
     getchar(); 
+}
+
+void Stop2()
+{
+    int c;
+    FILE *file;
+    file = fopen("/home/linaro/.rtkstatus", "r");
+    if (file) {
+      c = getc(file);
+      if ( c == "1" ) intflg=1;
+      fclose(file);
+    }
 }
 
 /* rtkrcv main -----------------------------------------------------------------
@@ -1867,6 +1880,7 @@ int main(int argc, char **argv)
     signal(SIGINT, Stop); /* keyboard interrupt */
    
     while (!intflg) {
+        Stop2();
         sleepms(100);
     }
 
