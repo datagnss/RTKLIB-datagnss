@@ -383,7 +383,7 @@ extern void resetsysopts(void)
     
     trace(3,"resetsysopts:\n");
     
-    prcopt_=prcopt_default2;
+    prcopt_=prcopt_default;
     solopt_=solopt_default;
     filopt_.satantp[0]='\0';
     filopt_.rcvantp[0]='\0';
