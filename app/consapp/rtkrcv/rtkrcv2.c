@@ -1696,15 +1696,19 @@ static void accept_sock(int ssock, con_t **con)
          inet_ntoa(addr.sin_addr));
 }
 
-int outstat=0;
-void Stop(int signo)
+void Stop(int sig)
 {
-    printf("oops! stop!\n");
+    char  c;
 
-    intflg=1;
-
-   
-    _exit(0);
+    signal(sig, SIG_IGN);
+    printf("OUCH, did you hit Ctrl-C?\n"
+            "Do you really want to quit? [y/n] ");
+    c = getchar();
+    if (c == 'y' || c == 'Y')
+        intflg=1;
+    else
+        signal(SIGINT, Stop);
+    getchar(); // Get new line character
 }
 
 /* rtkrcv main -----------------------------------------------------------------
@@ -1814,7 +1818,7 @@ void Stop(int signo)
 int main(int argc, char **argv)
 {
     con_t *con[MAXCON]={0};
-    int i,trace=0,sock=0;
+    int i,outstat=0,trace=0,sock=0;
     char *dev="",file[MAXSTR]="";
     
     for (i=1;i<argc;i++) {
@@ -1861,7 +1865,7 @@ int main(int argc, char **argv)
     if (!startsvr2()) return -1;
    
     signal(SIGINT, Stop); /* keyboard interrupt */
-
+   
     while (!intflg) {
         sleepms(100);
     }
@@ -1869,10 +1873,7 @@ int main(int argc, char **argv)
     /* stop rtk server */
     stopsvr(NULL);
     
-    /* close consoles */
-    for (i=0;i<MAXCON;i++) {
-        con_close(con[i]);
-    }
+    
     if (moniport>0) closemoni();
     if (outstat>0) rtkclosestat();
     
