@@ -121,7 +121,7 @@ ionex.o    : $(SRC)/rtklib.h
 tides.o    : $(SRC)/rtklib.h
 
 install:
-	cp rtkrcv $(BINDIR)
+	cp rtkrcv2 $(BINDIR)
 
 test1:
 	./rtkrcv -t 4 -m 52001 -t 4
