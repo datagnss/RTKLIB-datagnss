@@ -11,19 +11,19 @@ LDLIBS  = -lm -lrt -lpthread
 #LDLIBS  = ../../../lib/iers/gcc/iers.a -lm -lrt -lpthread
 
 all        : rtkrcv
-rtkrcv     : rtkrcv2.o vt.o rtkcmn2.o rtksvr.o rtkpos.o geoid.o solution.o lambda.o
-rtkrcv     : sbas.o stream.o rcvraw.o rtcm.o preceph.o options2.o pntpos.o ppp.o ppp_ar.o
+rtkrcv     : rtkrcv.o vt.o rtkcmn.o rtksvr.o rtkpos.o geoid.o solution.o lambda.o
+rtkrcv     : sbas.o stream.o rcvraw.o rtcm.o preceph.o options.o pntpos.o ppp.o ppp_ar.o
 rtkrcv     : novatel.o ublox.o crescent.o skytraq.o javad.o nvs.o binex.o
 rtkrcv     : rt17.o ephemeris.o rinex.o ionex.o rtcm2.o rtcm3.o rtcm3e.o
 rtkrcv     : tides.o septentrio.o swiftnav.o
 
 
-rtkrcv2.o   : ../rtkrcv2.c
-	$(CC) -c $(CFLAGS) ../rtkrcv2.c
+rtkrcv.o   : ../rtkrcv.c
+	$(CC) -c $(CFLAGS) ../rtkrcv.c
 vt.o       : ../vt.c
 	$(CC) -c $(CFLAGS) ../vt.c
-rtkcmn2.o   : $(SRC)/rtkcmn2.c
-	$(CC) -c $(CFLAGS) $(SRC)/rtkcmn2.c
+rtkcmn.o   : $(SRC)/rtkcmn.c
+	$(CC) -c $(CFLAGS) $(SRC)/rtkcmn.c
 rtksvr.o   : $(SRC)/rtksvr.c
 	$(CC) -c $(CFLAGS) $(SRC)/rtksvr.c
 rtkpos.o   : $(SRC)/rtkpos.c
@@ -50,8 +50,8 @@ rtcm3e.o   : $(SRC)/rtcm3e.c
 	$(CC) -c $(CFLAGS) $(SRC)/rtcm3e.c
 preceph.o  : $(SRC)/preceph.c
 	$(CC) -c $(CFLAGS) $(SRC)/preceph.c
-options2.o  : $(SRC)/options2.c
-	$(CC) -c $(CFLAGS) $(SRC)/options2.c
+options.o  : $(SRC)/options.c
+	$(CC) -c $(CFLAGS) $(SRC)/options.c
 pntpos.o   : $(SRC)/pntpos.c
 	$(CC) -c $(CFLAGS) $(SRC)/pntpos.c
 ppp.o      : $(SRC)/ppp.c
@@ -87,8 +87,8 @@ tides.o    : $(SRC)/tides.c
 septentrio.o: $(SRC)/rcv/septentrio.c
 	$(CC) -c $(CFLAGS) $(SRC)/rcv/septentrio.c
 
-rtkrcv2.o   : $(SRC)/rtklib.h ../vt.h
-rtkcmn2.o   : $(SRC)/rtklib.h
+rtkrcv.o   : $(SRC)/rtklib.h ../vt.h
+rtkcmn.o   : $(SRC)/rtklib.h
 rtksvr.o   : $(SRC)/rtklib.h
 rtkpos.o   : $(SRC)/rtklib.h
 geoid.o    : $(SRC)/rtklib.h
@@ -101,7 +101,7 @@ rtcm2.o    : $(SRC)/rtklib.h
 rtcm3.o    : $(SRC)/rtklib.h
 rtcm3e.o   : $(SRC)/rtklib.h
 preceph.o  : $(SRC)/rtklib.h
-options2.o  : $(SRC)/rtklib.h
+options.o  : $(SRC)/rtklib.h
 pntpos.o   : $(SRC)/rtklib.h
 ppp.o      : $(SRC)/rtklib.h
 ppp_ar.o   : $(SRC)/rtklib.h
