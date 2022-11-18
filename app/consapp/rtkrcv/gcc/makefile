@@ -50,7 +50,7 @@ rtcm3e.o   : $(SRC)/rtcm3e.c
 	$(CC) -c $(CFLAGS) $(SRC)/rtcm3e.c
 preceph.o  : $(SRC)/preceph.c
 	$(CC) -c $(CFLAGS) $(SRC)/preceph.c
-optionss.o  : $(SRC)/options2.c
+options2.o  : $(SRC)/options2.c
 	$(CC) -c $(CFLAGS) $(SRC)/options2.c
 pntpos.o   : $(SRC)/pntpos.c
 	$(CC) -c $(CFLAGS) $(SRC)/pntpos.c
@@ -87,8 +87,8 @@ tides.o    : $(SRC)/tides.c
 septentrio.o: $(SRC)/rcv/septentrio.c
 	$(CC) -c $(CFLAGS) $(SRC)/rcv/septentrio.c
 
-rtkrcv.o   : $(SRC)/rtklib.h ../vt.h
-rtkcmn.o   : $(SRC)/rtklib.h
+rtkrcv2.o   : $(SRC)/rtklib.h ../vt.h
+rtkcmn2.o   : $(SRC)/rtklib.h
 rtksvr.o   : $(SRC)/rtklib.h
 rtkpos.o   : $(SRC)/rtklib.h
 geoid.o    : $(SRC)/rtklib.h
@@ -101,7 +101,7 @@ rtcm2.o    : $(SRC)/rtklib.h
 rtcm3.o    : $(SRC)/rtklib.h
 rtcm3e.o   : $(SRC)/rtklib.h
 preceph.o  : $(SRC)/rtklib.h
-options.o  : $(SRC)/rtklib.h
+options2.o  : $(SRC)/rtklib.h
 pntpos.o   : $(SRC)/rtklib.h
 ppp.o      : $(SRC)/rtklib.h
 ppp_ar.o   : $(SRC)/rtklib.h
