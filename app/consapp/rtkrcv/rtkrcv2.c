@@ -116,7 +116,7 @@ static char startcmd[MAXSTR]="";        /* start command */
 static char stopcmd [MAXSTR]="";        /* stop command */
 static int modflgr[256] ={0};           /* modified flags of receiver options */
 static int modflgs[256] ={0};           /* modified flags of system options */
-static int moniport     =8078;             /* monitor port */
+static int moniport     =0;             /* monitor port 8078 */
 static int telnetport   =8077;
 static int keepalive    =0;             /* keep alive flag */
 static int start        =0;             /* auto start */
@@ -1830,9 +1830,10 @@ void Stop2()
 *-----------------------------------------------------------------------------*/
 int main(int argc, char **argv)
 {
-    con_t *con[MAXCON]={0};
-    int i,outstat=0,trace=0,sock=0;
-    char *dev="",file[MAXSTR]="";
+    int i,outstat=0,trace=0;
+    char file[MAXSTR]="";
+
+    fprintf(stderr,"start rtkrcv.\n");
     
     for (i=1;i<argc;i++) {
   
@@ -1847,10 +1848,13 @@ int main(int argc, char **argv)
         traceopen(TRACEFILE);
         tracelevel(trace);
     }
+
+    fprintf(stderr,"init rtk server.\n");
     /* initialize rtk server and monitor port */
     rtksvrinit(&svr);
     strinit(&moni);
     
+    fprintf(stderr,"config processing options.\n");
     /* load options file */
     if (!*file) sprintf(file,"%s/%s",OPTSDIR,OPTSFILE);
     
@@ -1862,6 +1866,7 @@ int main(int argc, char **argv)
 
     getsysopts(&prcopt,solopt,&filopt);
     
+    fprintf(stderr,"read navigation data\n");
     /* read navigation data */
     if (!readnav(NAVIFILE,&svr.nav)) {
         fprintf(stderr,"no navigation data: %s\n",NAVIFILE);
@@ -1874,7 +1879,7 @@ int main(int argc, char **argv)
         fprintf(stderr,"monitor port open error: %d\n",moniport);
     }
 
-    
+    fprintf(stderr,"rtk server start...\n");
     if (!startsvr2()) return -1;
    
     signal(SIGINT, Stop); /* keyboard interrupt */
@@ -1884,6 +1889,7 @@ int main(int argc, char **argv)
         Stop2();
     }
 
+    fprintf(stderr,"stop rtk server.\n");
     /* stop rtk server */
     stopsvr(NULL);
     
@@ -1896,6 +1902,8 @@ int main(int argc, char **argv)
         fprintf(stderr,"navigation data save error: %s\n",NAVIFILE);
     }
     traceclose();
+
+    fprintf(stderr,"rtkrcv stopped.\n");
     
     return 0;
 }
