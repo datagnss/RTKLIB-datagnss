@@ -1699,7 +1699,7 @@ static void accept_sock(int ssock, con_t **con)
 int outstat=0;
 void Stop(int signo)
 {
-    printf("oops! stop!\n")
+    printf("oops! stop!\n");
 
     /* stop rtk server */
     
