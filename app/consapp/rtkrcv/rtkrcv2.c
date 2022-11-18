@@ -410,6 +410,43 @@ static void readant(vt_t *vt, prcopt_t *opt, nav_t *nav)
     
     free(pcvr.pcv); free(pcvs.pcv);
 }
+
+static void readant2(prcopt_t *opt, nav_t *nav)
+{
+    const pcv_t pcv0={0};
+    pcvs_t pcvr={0},pcvs={0};
+    pcv_t *pcv;
+    gtime_t time=timeget();
+    int i;
+    
+    trace(3,"readant:\n");
+    
+    opt->pcvr[0]=opt->pcvr[1]=pcv0;
+    if (!*filopt.rcvantp) return;
+    
+    if (readpcv(filopt.rcvantp,&pcvr)) {
+        for (i=0;i<2;i++) {
+            if (!*opt->anttype[i]) continue;
+            if (!(pcv=searchpcv(0,opt->anttype[i],time,&pcvr))) {
+                trace(2,"no antenna %s in %s",opt->anttype[i],filopt.rcvantp);
+                continue;
+            }
+            opt->pcvr[i]=*pcv;
+        }
+    }
+    else tracenav(2,"antenna file open error %s",filopt.rcvantp);
+    
+    if (readpcv(filopt.satantp,&pcvs)) {
+        for (i=0;i<MAXSAT;i++) {
+            if (!(pcv=searchpcv(i+1,"",time,&pcvs))) continue;
+            nav->pcvs[i]=*pcv;
+        }
+    }
+    else trace(2,"antenna file open error %s",filopt.satantp);
+    
+    free(pcvr.pcv); free(pcvs.pcv);
+}
+
 /* start rtk server ----------------------------------------------------------*/
 static int startsvr(vt_t *vt)
 {
@@ -541,7 +578,7 @@ static int startsvr2()
     pos2ecef(pos,npos);
     
     /* read antenna file */
-    readant(vt,&prcopt,&svr.nav);
+    readant2(&prcopt,&svr.nav);
     
     /* read dcb file */
     if (*filopt.dcb) {
