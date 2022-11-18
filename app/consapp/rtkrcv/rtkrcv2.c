@@ -1639,7 +1639,7 @@ int main(int argc, char **argv)
     }
     if (telnetport) {
         /* open socket for remote console */
-        if ((sock=open_sock(port))<=0) {
+        if ((sock=open_sock(telnetport))<=0) {
             fprintf(stderr,"console open error port=%d\n",port);
             if (moniport>0) closemoni();
             if (outstat>0) rtkclosestat();
