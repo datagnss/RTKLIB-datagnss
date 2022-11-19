@@ -1797,12 +1797,12 @@ int main(int argc, char **argv)
     signal(SIGHUP ,SIG_IGN);
     signal(SIGPIPE,SIG_IGN);
 
+    /* start rtk server */
+    if (start) {
+        startsvr(NULL);
+    }
+
     while (!intflg) {
-        /* auto start if option set */
-        if (start) {
-            if (!startsvr(NULL)) return -1;
-            start=0;
-        }
         /* accept remote console connection */
         accept_sock(sock,con);
         sleepms(100);
