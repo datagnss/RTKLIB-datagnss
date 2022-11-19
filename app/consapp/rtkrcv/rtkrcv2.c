@@ -1805,6 +1805,7 @@ int main(int argc, char **argv)
     while (!intflg) {
         /* accept remote console connection */
         accept_sock(sock,con);
+        Stop2();
         sleepms(100);
     }
     /* stop rtk server */
@@ -1824,7 +1825,7 @@ int main(int argc, char **argv)
     else
         fprintf(stderr,"save navigation data successful.");
 
-        
+
     traceclose();
     return 0;
 }
