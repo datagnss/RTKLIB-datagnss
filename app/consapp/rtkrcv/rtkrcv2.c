@@ -1732,6 +1732,7 @@ int main(int argc, char **argv)
 {
     con_t *con[MAXCON]={0};
     int i,port=8077,outstat=0,trace=0,sock=0;
+    char file[MAXSTR]="";
     
     for (i=1;i<argc;i++) {
         if      (!strcmp(argv[i],"-s")) start=1;
@@ -1749,7 +1750,14 @@ int main(int argc, char **argv)
     rtksvrinit(&svr);
     strinit(&moni);
     
+    /* load options file */
+    if (!*file) sprintf(file,"%s/%s",OPTSDIR,OPTSFILE);
+    
     resetsysopts();
+
+    if (!loadopts(file,rcvopts)||!loadopts(file,sysopts)) {
+        fprintf(stderr,"no options file: %s. defaults used\n",file);
+    }
     
     getsysopts(&prcopt,solopt,&filopt);
     
