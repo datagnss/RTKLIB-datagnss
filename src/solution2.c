@@ -1298,8 +1298,15 @@ extern int outnmea_rmc(uint8_t *buff, const sol_t *sol)
     else {
         dir=dirp;
     }
+    /*
+    Mode Indicator: 
+    A=Autonomous, D=Differential, E=Estimated, 
+    F=Float RTK, M=Manual input, N=No fix, 
+    P=Precise, R=Real time kinematic, S=Simulator
+    */
     if      (sol->stat==SOLQ_DGPS ||sol->stat==SOLQ_SBAS) mode="D";
-    else if (sol->stat==SOLQ_FLOAT||sol->stat==SOLQ_FIX ) mode="R";
+    else if (sol->stat==SOLQ_FIX ) mode="R";
+    else if (sol->stat==SOLQ_FLOAT ) mode="F";
     else if (sol->stat==SOLQ_PPP) mode="P";
     deg2dms(fabs(pos[0])*R2D,dms1,7);
     deg2dms(fabs(pos[1])*R2D,dms2,7);
