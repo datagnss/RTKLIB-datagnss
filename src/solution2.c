@@ -1358,15 +1358,15 @@ extern int outnmea_gst(uint8_t *buff, const sol_t *sol, const ssat_t *ssat)
 	range_rms = SQRT(sum_rms / count_rms);
 
     trace(3,"outnmea_gst:\n");
-    //rms = sqrt(latsigma*latsigma + lonsigma*lonsigma);
+    /* rms = sqrt(latsigma*latsigma + lonsigma*lonsigma); */
 
 	p+=sprintf(p, "$%sGST,%02.0f%02.0f%05.2f,%5.3f,,,,%5.3f,%5.3f,%5.3f",NMEA_TID,
                  ep[3], ep[4], ep[5], range_rms, SQRT(Q[0]), SQRT(Q[4]), SQRT(Q[8]));
 
-    //just demo sentence,not implensment yet
-	//p+=sprintf(p,"$GPGST,172814.0,0.006,0.023,0.020,273.6,0.023,0.020,0.031");
-
-    for (q=(char *)buff+1,sum=0;*q;q++) sum^=*q; //check-sum
+    /* just demo sentence,not implensment yet
+	p+=sprintf(p,"$GPGST,172814.0,0.006,0.023,0.020,273.6,0.023,0.020,0.031");
+    */
+    for (q=(char *)buff+1,sum=0;*q;q++) sum^=*q; 
     p+=sprintf(p,"*%02X%c%c",sum,0x0D,0x0A);
 
     return p-(char *)buff;
