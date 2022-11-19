@@ -514,9 +514,13 @@ extern void resetsysopts(void)
     filopt_.solstat[0]='\0';
     filopt_.trace  [0]='\0';
     for (i=0;i<2;i++) antpostype_[i]=0;
+
+    antpostype_[0]=0;
+    antpostype_[1]=5;
+
     elmask_=15.0;
-    elmaskar_=0.0;
-    elmaskhold_=0.0;
+    elmaskar_=15.0;
+    elmaskhold_=15.0;
     for (i=0;i<2;i++) for (j=0;j<3;j++) {
         antpos_[i][j]=0.0;
     }
