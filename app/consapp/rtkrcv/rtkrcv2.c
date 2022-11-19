@@ -411,41 +411,7 @@ static void readant(vt_t *vt, prcopt_t *opt, nav_t *nav)
     free(pcvr.pcv); free(pcvs.pcv);
 }
 
-static void readant2(prcopt_t *opt, nav_t *nav)
-{
-    const pcv_t pcv0={0};
-    pcvs_t pcvr={0},pcvs={0};
-    pcv_t *pcv;
-    gtime_t time=timeget();
-    int i;
-    
-    trace(3,"readant:\n");
-    
-    opt->pcvr[0]=opt->pcvr[1]=pcv0;
-    if (!*filopt.rcvantp) return;
-    
-    if (readpcv(filopt.rcvantp,&pcvr)) {
-        for (i=0;i<2;i++) {
-            if (!*opt->anttype[i]) continue;
-            if (!(pcv=searchpcv(0,opt->anttype[i],time,&pcvr))) {
-                trace(2,"no antenna %s in %s",opt->anttype[i],filopt.rcvantp);
-                continue;
-            }
-            opt->pcvr[i]=*pcv;
-        }
-    }
-    else trace(2,"antenna file open error %s",filopt.rcvantp);
-    
-    if (readpcv(filopt.satantp,&pcvs)) {
-        for (i=0;i<MAXSAT;i++) {
-            if (!(pcv=searchpcv(i+1,"",time,&pcvs))) continue;
-            nav->pcvs[i]=*pcv;
-        }
-    }
-    else trace(2,"antenna file open error %s",filopt.satantp);
-    
-    free(pcvr.pcv); free(pcvs.pcv);
-}
+
 
 /* start rtk server ----------------------------------------------------------*/
 static int startsvr(vt_t *vt)
@@ -537,91 +503,7 @@ static int startsvr(vt_t *vt)
     return 1;
 }
 
-static int startsvr2()
-{
-    static sta_t sta[MAXRCV]={{""}};
-    double pos[3],npos[3];
-    char s1[3][MAXRCVCMD]={"","",""},*cmds[]={NULL,NULL,NULL};
-    char s2[3][MAXRCVCMD]={"","",""},*cmds_periodic[]={NULL,NULL,NULL};
-    char *ropts[]={"","",""};
-    char *paths[]={
-        strpath[0],strpath[1],strpath[2],strpath[3],strpath[4],strpath[5],
-        strpath[6],strpath[7]
-    };
-    char errmsg[2048]="";
-    int i,ret,stropt[8]={0};
-    
-    trace(3,"startsvr:\n");
-    
-    /* read start commads from command files */
-    for (i=0;i<3;i++) {
-        if (!*rcvcmds[i]) continue;
-        if (!readcmd(rcvcmds[i],s1[i],0)) {
-            trace(2,"no command file: %s\n",rcvcmds[i]);
-        }
-        else cmds[i]=s1[i];
-        if (!readcmd(rcvcmds[i],s2[i],2)) {
-            trace(2,"no command file: %s\n",rcvcmds[i]);
-        }
-        else cmds_periodic[i]=s2[i];
-    }
-    /* confirm overwrite */
-    for (i=3;i<8;i++) {
-        if (strtype[i]==STR_FILE) return 0;
-    }
-    if (prcopt.refpos==4) { /* rtcm */
-        for (i=0;i<3;i++) prcopt.rb[i]=0.0;
-    }
-    pos[0]=nmeapos[0]*D2R;
-    pos[1]=nmeapos[1]*D2R;
-    pos[2]=nmeapos[2];
-    pos2ecef(pos,npos);
-    
-    /* read antenna file */
-    readant2(&prcopt,&svr.nav);
-    
-    /* read dcb file */
-    if (*filopt.dcb) {
-        strcpy(sta[0].name,sta_name);
-        readdcb(filopt.dcb,&svr.nav,sta);
-    }
-    /* open geoid data file */
-    if (solopt[0].geoid>0&&!opengeoid(solopt[0].geoid,filopt.geoid)) {
-        trace(2,"geoid data open error: %s\n",filopt.geoid);
-    }
-    for (i=0;*rcvopts[i].name;i++) modflgr[i]=0;
-    for (i=0;*sysopts[i].name;i++) modflgs[i]=0;
-    
-    /* set stream options */
-    stropt[0]=timeout;
-    stropt[1]=reconnect;
-    stropt[2]=1000;
-    stropt[3]=buffsize;
-    stropt[4]=fswapmargin;
-    strsetopt(stropt);
-    
-    if (strfmt[2]==8) strfmt[2]=STRFMT_SP3;
-    
-    /* set ftp/http directory and proxy */
-    strsetdir(filopt.tempdir);
-    strsetproxy(proxyaddr);
-    
-    /* execute start command */
-    if (*startcmd&&(ret=system(startcmd))) {
-        trace(2,"command exec error: %s (%d)\n",startcmd,ret);
-    }
-    solopt[0].posf=strfmt[3];
-    solopt[1].posf=strfmt[4];
-    
-    /* start rtk server */
-    if (!rtksvrstart(&svr,svrcycle,buffsize,strtype,paths,strfmt,navmsgsel,
-                     cmds,cmds_periodic,ropts,nmeacycle,nmeareq,npos,&prcopt,
-                     solopt,&moni,errmsg)) {
-        trace(2,"rtk server start error (%s)\n",errmsg);
-        return 0;
-    }
-    return 1;
-}
+
 
 /* stop rtk server -----------------------------------------------------------*/
 static void stopsvr(vt_t *vt)
