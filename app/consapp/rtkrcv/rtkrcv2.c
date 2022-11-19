@@ -1371,12 +1371,7 @@ static void *con_thread(void *arg)
         con->state=0;
         return 0;
     }
- 
-    /* auto start if option set */
-    if (start) {
-        cmd_start(args,narg,con->vt);
-        start=0;
-    }
+
     
     while (con->state) {
         
@@ -1468,6 +1463,72 @@ static void con_close(con_t *con)
     con->state=con->vt->state=0;
     pthread_join(con->thread,NULL);
     free(con);
+}
+
+/* open socket for remote console --------------------------------------------*/
+static int open_sock(int port)
+{
+    struct sockaddr_in addr;
+    int sock,on=1;
+    
+    trace(3,"open_sock: port=%d\n",port);
+    
+    if ((sock=socket(AF_INET,SOCK_STREAM,0))<0) {
+        fprintf(stderr,"socket error (%d)\n",errno);
+        return 0;
+    }
+    setsockopt(sock,SOL_SOCKET,SO_REUSEADDR,(const char *)&on,sizeof(on));
+    memset(&addr,0,sizeof(addr));
+    addr.sin_family=AF_INET;
+    addr.sin_port=htons(port);
+    
+    if (bind(sock,(struct sockaddr *)&addr,sizeof(addr))<0) {
+        fprintf(stderr,"bind error (%d)\n",errno);
+        close(sock);
+        return -1;
+    }
+    listen(sock,5);
+    return sock;
+}
+
+/* accept remote console connection ------------------------------------------*/
+static void accept_sock(int ssock, con_t **con)
+{
+    struct timeval tv={0};
+    struct sockaddr_in addr;
+    socklen_t len=sizeof(addr);
+    fd_set rs;
+    int i,sock;
+    
+    if (ssock<=0) return;
+    
+    trace(4,"accept_sock: ssock=%d\n",ssock);
+    
+    for (i=1;i<MAXCON;i++) {
+        if (!con[i]||con[i]->state) continue;
+        con_close(con[i]);
+        con[i]=NULL;
+    }
+    FD_ZERO(&rs);
+    FD_SET(ssock,&rs);
+    if (select(ssock+1,&rs,NULL,NULL,&tv)<=0) {
+        return;
+    }
+    if ((sock=accept(ssock,(struct sockaddr *)&addr,&len))<=0) {
+        return;
+    }
+    for (i=1;i<MAXCON;i++) {
+        if (con[i]) continue;
+        
+        con[i]=con_open(sock,"");
+        
+        trace(3,"remote console connected: addr=%s\n",
+              inet_ntoa(addr.sin_addr));
+        return;
+    }
+    close(sock);
+    trace(2,"remote console connection refused. addr=%s\n",
+         inet_ntoa(addr.sin_addr));
 }
 
 void Stop2()
@@ -1586,7 +1647,7 @@ void Stop2()
 *     command is distinguished according to header characters.
 *     
 *-----------------------------------------------------------------------------*/
-int main(int argc, char **argv)
+int main_(int argc, char **argv)
 {
     int i,outstat=0,trace=0;
     char file[MAXSTR]="";
@@ -1661,5 +1722,105 @@ int main(int argc, char **argv)
 
     fprintf(stderr,"rtkrcv stopped.\n");
     
+    return 0;
+}
+
+int main(int argc, char **argv)
+{
+    con_t *con[MAXCON]={0};
+    int i,port=0,outstat=0,trace=0,sock=0;
+    char *dev="",file[MAXSTR]="";
+    
+    for (i=1;i<argc;i++) {
+        if      (!strcmp(argv[i],"-s")) start=1;
+        else if (!strcmp(argv[i],"-p")&&i+1<argc) port=atoi(argv[++i]);
+        else if (!strcmp(argv[i],"-m")&&i+1<argc) moniport=atoi(argv[++i]);
+        else if (!strcmp(argv[i],"-d")&&i+1<argc) dev=argv[++i];
+        else if (!strcmp(argv[i],"-o")&&i+1<argc) strcpy(file,argv[++i]);
+        else if (!strcmp(argv[i],"-w")&&i+1<argc) strcpy(passwd,argv[++i]);
+        else if (!strcmp(argv[i],"-r")&&i+1<argc) outstat=atoi(argv[++i]);
+        else if (!strcmp(argv[i],"-t")&&i+1<argc) trace=atoi(argv[++i]);
+        else if (!strcmp(argv[i],"-sta")&&i+1<argc) strcpy(sta_name,argv[++i]);
+        else printusage();
+    }
+    if (trace>0) {
+        traceopen(TRACEFILE);
+        tracelevel(trace);
+    }
+    /* initialize rtk server and monitor port */
+    rtksvrinit(&svr);
+    strinit(&moni);
+    
+    /* load options file */
+    if (!*file) sprintf(file,"%s/%s",OPTSDIR,OPTSFILE);
+    
+    resetsysopts();
+    if (!loadopts(file,rcvopts)||!loadopts(file,sysopts)) {
+        fprintf(stderr,"no options file: %s. defaults used\n",file);
+    }
+    getsysopts(&prcopt,solopt,&filopt);
+    
+    /* read navigation data */
+    if (!readnav(NAVIFILE,&svr.nav)) {
+        fprintf(stderr,"no navigation data: %s\n",NAVIFILE);
+    }
+    if (outstat>0) {
+        rtkopenstat(STATFILE,outstat);
+    }
+    /* open monitor port */
+    if (moniport>0&&!openmoni(moniport)) {
+        fprintf(stderr,"monitor port open error: %d\n",moniport);
+    }
+    if (port) {
+        /* open socket for remote console */
+        if ((sock=open_sock(port))<=0) {
+            fprintf(stderr,"console open error port=%d\n",port);
+            if (moniport>0) closemoni();
+            if (outstat>0) rtkclosestat();
+            traceclose();
+            return -1;
+        }
+    }
+    else {
+        /* open device for local console */
+        if (!(con[0]=con_open(0,dev))) {
+            fprintf(stderr,"console open error dev=%s\n",dev);
+            if (moniport>0) closemoni();
+            if (outstat>0) rtkclosestat();
+            traceclose();
+            return -1;
+        }
+    }
+    signal(SIGINT, sigshut); /* keyboard interrupt */
+    signal(SIGTERM,sigshut); /* external shutdown signal */
+    signal(SIGUSR2,sigshut);
+    signal(SIGHUP ,SIG_IGN);
+    signal(SIGPIPE,SIG_IGN);
+
+    while (!intflg) {
+        /* auto start if option set */
+        if (start) {
+            if (!startsvr(NULL)) return -1;
+            start=0;
+        }
+        /* accept remote console connection */
+        accept_sock(sock,con);
+        sleepms(100);
+    }
+    /* stop rtk server */
+    stopsvr(NULL);
+    
+    /* close consoles */
+    for (i=0;i<MAXCON;i++) {
+        con_close(con[i]);
+    }
+    if (moniport>0) closemoni();
+    if (outstat>0) rtkclosestat();
+    
+    /* save navigation data */
+    if (!savenav(NAVIFILE,&svr.nav)) {
+        fprintf(stderr,"navigation data save error: %s\n",NAVIFILE);
+    }
+    traceclose();
     return 0;
 }
