@@ -1731,7 +1731,7 @@ int main_(int argc, char **argv)
 int main(int argc, char **argv)
 {
     con_t *con[MAXCON]={0};
-    int i,port=0,outstat=0,trace=0,sock=0;
+    int i,port=8077,outstat=0,trace=0,sock=0;
     char *dev="",file[MAXSTR]="";
     
     for (i=1;i<argc;i++) {
