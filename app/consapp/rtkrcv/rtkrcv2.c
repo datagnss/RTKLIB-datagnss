@@ -1732,16 +1732,10 @@ int main(int argc, char **argv)
 {
     con_t *con[MAXCON]={0};
     int i,port=8077,outstat=0,trace=0,sock=0;
-    char *dev="",file[MAXSTR]="";
-    moniport=8078;
     
     for (i=1;i<argc;i++) {
         if      (!strcmp(argv[i],"-s")) start=1;
-        else if (!strcmp(argv[i],"-p")&&i+1<argc) port=atoi(argv[++i]);
-        else if (!strcmp(argv[i],"-m")&&i+1<argc) moniport=atoi(argv[++i]);
-        else if (!strcmp(argv[i],"-d")&&i+1<argc) dev=argv[++i];
-        else if (!strcmp(argv[i],"-o")&&i+1<argc) strcpy(file,argv[++i]);
-        else if (!strcmp(argv[i],"-w")&&i+1<argc) strcpy(passwd,argv[++i]);
+        else if (!strcmp(argv[i],"-m")) moniport=8078;
         else if (!strcmp(argv[i],"-r")&&i+1<argc) outstat=atoi(argv[++i]);
         else if (!strcmp(argv[i],"-t")&&i+1<argc) trace=atoi(argv[++i]);
         else if (!strcmp(argv[i],"-sta")&&i+1<argc) strcpy(sta_name,argv[++i]);
@@ -1755,19 +1749,10 @@ int main(int argc, char **argv)
     rtksvrinit(&svr);
     strinit(&moni);
     
-    /* load options file */
-    if (!*file) sprintf(file,"%s/%s",OPTSDIR,OPTSFILE);
-    
     resetsysopts();
-    if (!loadopts(file,rcvopts)||!loadopts(file,sysopts)) {
-        fprintf(stderr,"no options file: %s. defaults used\n",file);
-    }
+    
     getsysopts(&prcopt,solopt,&filopt);
     
-    /* read navigation data */
-    if (!readnav(NAVIFILE,&svr.nav)) {
-        fprintf(stderr,"no navigation data: %s\n",NAVIFILE);
-    }
     if (outstat>0) {
         rtkopenstat(STATFILE,outstat);
     }
@@ -1775,26 +1760,16 @@ int main(int argc, char **argv)
     if (moniport>0&&!openmoni(moniport)) {
         fprintf(stderr,"monitor port open error: %d\n",moniport);
     }
-    if (port) {
-        /* open socket for remote console */
-        if ((sock=open_sock(port))<=0) {
-            fprintf(stderr,"console open error port=%d\n",port);
-            if (moniport>0) closemoni();
-            if (outstat>0) rtkclosestat();
-            traceclose();
-            return -1;
-        }
+    
+    /* open socket for remote console */
+    if ((sock=open_sock(port))<=0) {
+        fprintf(stderr,"console open error port=%d\n",port);
+        if (moniport>0) closemoni();
+        if (outstat>0) rtkclosestat();
+        traceclose();
+        return -1;
     }
-    else {
-        /* open device for local console */
-        if (!(con[0]=con_open(0,dev))) {
-            fprintf(stderr,"console open error dev=%s\n",dev);
-            if (moniport>0) closemoni();
-            if (outstat>0) rtkclosestat();
-            traceclose();
-            return -1;
-        }
-    }
+    
     signal(SIGINT, sigshut); /* keyboard interrupt */
     signal(SIGTERM,sigshut); /* external shutdown signal */
     signal(SIGUSR2,sigshut);
@@ -1821,14 +1796,6 @@ int main(int argc, char **argv)
     }
     if (moniport>0) closemoni();
     if (outstat>0) rtkclosestat();
-    
-    /* save navigation data */
-    if (!savenav(NAVIFILE,&svr.nav)) {
-        fprintf(stderr,"navigation data save error: %s\n",NAVIFILE);
-    } 
-    else
-        fprintf(stderr,"save navigation data successful.");
-
 
     traceclose();
     return 0;

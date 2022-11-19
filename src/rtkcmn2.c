@@ -203,7 +203,7 @@ const double chisqr[100]={      /* chi-sqr(n) (alpha=0.001) */
 };
 
 const prcopt_t prcopt_default={ /* defaults processing options */
-    PMODE_KINEMA,0,2,SYS_GPS|SYS_CMP|SYS_GLO|SYS_GAL,   /* mode,soltype,nf,navsys */
+    PMODE_KINEMA,0,2,SYS_GPS|SYS_CMP|SYS_GLO|SYS_GAL|SYS_QZS,   /* mode,soltype,nf,navsys */
     15.0*D2R,{{0,0}},           /* elmin,snrmask */
     0,3,3,1,1,1,                /* sateph,modear,glomodear,gpsmodear,bdsmodear,arfilter */
     20,0,4,5,10,20,             /* maxout,minlock,minfixsats,minholdsats,mindropsats,minfix */
