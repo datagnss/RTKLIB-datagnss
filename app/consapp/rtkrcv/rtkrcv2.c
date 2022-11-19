@@ -188,23 +188,6 @@ static const char *pathopts[]={         /* path options help */
 #define SOLOPT  "0:llh,1:xyz,2:enu,3:nmea,4:stat"
 #define MSGOPT  "0:all,1:rover,2:base,3:corr"
 
-static opt_t rcvopts2[]={
-    {"inpstr2-path",    2,  (void *)strpath [1],         ""     },
-    {"inpstr2-nmeareq", 3,  (void *)&nmeareq,            NMEOPT },
-    {"inpstr2-nmealat", 1,  (void *)&nmeapos[0],         "deg"  },
-    {"inpstr2-nmealon", 1,  (void *)&nmeapos[1],         "deg"  },
-    {"inpstr2-nmeahgt", 1,  (void *)&nmeapos[2],         "m"    },
-  
-    {"logstr1-type",    3,  (void *)&strtype[5],         OSTOPT },
-    {"logstr2-type",    3,  (void *)&strtype[6],         OSTOPT },
-    {"logstr3-type",    3,  (void *)&strtype[7],         OSTOPT },
-    {"logstr1-path",    2,  (void *)strpath [5],         ""     },
-    {"logstr2-path",    2,  (void *)strpath [6],         ""     },
-    {"logstr3-path",    2,  (void *)strpath [7],         ""     },
-    
-    {"",0,NULL,""}
-};
-
 static opt_t rcvopts[]={
     {"console-passwd",  2,  (void *)passwd,              ""     },
     {"console-timetype",3,  (void *)&timetype,           TIMOPT },
