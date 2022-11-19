@@ -117,7 +117,7 @@ static char stopcmd [MAXSTR]="";        /* stop command */
 static int modflgr[256] ={0};           /* modified flags of receiver options */
 static int modflgs[256] ={0};           /* modified flags of system options */
 static int moniport     =0;             /* monitor port 8078 */
-static int telnetport   =8077;
+
 static int keepalive    =0;             /* keep alive flag */
 static int start        =0;             /* auto start */
 static int fswapmargin  =30;            /* file swap margin (s) */
@@ -1468,86 +1468,6 @@ static void con_close(con_t *con)
     con->state=con->vt->state=0;
     pthread_join(con->thread,NULL);
     free(con);
-}
-/* open socket for remote console --------------------------------------------*/
-static int open_sock(int port)
-{
-    struct sockaddr_in addr;
-    int sock,on=1;
-    
-    trace(3,"open_sock: port=%d\n",port);
-    
-    if ((sock=socket(AF_INET,SOCK_STREAM,0))<0) {
-        fprintf(stderr,"socket error (%d)\n",errno);
-        return 0;
-    }
-    setsockopt(sock,SOL_SOCKET,SO_REUSEADDR,(const char *)&on,sizeof(on));
-    memset(&addr,0,sizeof(addr));
-    addr.sin_family=AF_INET;
-    addr.sin_port=htons(port);
-    
-    if (bind(sock,(struct sockaddr *)&addr,sizeof(addr))<0) {
-        fprintf(stderr,"bind error (%d)\n",errno);
-        close(sock);
-        return -1;
-    }
-    listen(sock,5);
-    return sock;
-}
-/* accept remote console connection ------------------------------------------*/
-static void accept_sock(int ssock, con_t **con)
-{
-    struct timeval tv={0};
-    struct sockaddr_in addr;
-    socklen_t len=sizeof(addr);
-    fd_set rs;
-    int i,sock;
-    
-    if (ssock<=0) return;
-    
-    trace(4,"accept_sock: ssock=%d\n",ssock);
-    
-    for (i=1;i<MAXCON;i++) {
-        if (!con[i]||con[i]->state) continue;
-        con_close(con[i]);
-        con[i]=NULL;
-    }
-    FD_ZERO(&rs);
-    FD_SET(ssock,&rs);
-    if (select(ssock+1,&rs,NULL,NULL,&tv)<=0) {
-        return;
-    }
-    if ((sock=accept(ssock,(struct sockaddr *)&addr,&len))<=0) {
-        return;
-    }
-    for (i=1;i<MAXCON;i++) {
-        if (con[i]) continue;
-        
-        con[i]=con_open(sock,"");
-        
-        trace(3,"remote console connected: addr=%s\n",
-              inet_ntoa(addr.sin_addr));
-        return;
-    }
-    close(sock);
-    trace(2,"remote console connection refused. addr=%s\n",
-         inet_ntoa(addr.sin_addr));
-}
-
-void Stop(int sig)
-{
-    char  c;
-
-    signal(sig, SIG_IGN);
-    printf("OUCH, did you hit Ctrl-C?\n"
-            "Do you really want to quit? [y/n] ");
-    c = getchar();
-    if (c == 'y' || c == 'Y')
-        intflg=1;
-    else
-        signal(SIGINT, Stop);
-    
-    getchar(); 
 }
 
 void Stop2()
