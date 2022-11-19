@@ -13,7 +13,7 @@ LDLIBS  = -lm -lrt -lpthread
 #LDLIBS  = ../../../lib/iers/gcc/iers.a -lm -lrt -lpthread
 
 all        : rtkrcv2
-rtkrcv2     : rtkrcv2.o vt.o rtkcmn2.o rtksvr.o rtkpos.o geoid.o solution.o lambda.o
+rtkrcv2     : rtkrcv2.o vt.o rtkcmn2.o rtksvr.o rtkpos.o geoid.o solution2.o lambda.o
 rtkrcv2    : sbas.o stream.o rcvraw.o rtcm.o preceph.o options2.o pntpos.o ppp.o ppp_ar.o
 rtkrcv2     : novatel.o ublox.o crescent.o skytraq.o javad.o nvs.o binex.o
 rtkrcv2     : rt17.o ephemeris.o rinex.o ionex.o rtcm2.o rtcm3.o rtcm3e.o
@@ -32,8 +32,8 @@ rtkpos.o   : $(SRC)/rtkpos.c
 	$(CC) -c $(CFLAGS) $(SRC)/rtkpos.c
 geoid.o    : $(SRC)/geoid.c
 	$(CC) -c $(CFLAGS) $(SRC)/geoid.c
-solution.o : $(SRC)/solution.c
-	$(CC) -c $(CFLAGS) $(SRC)/solution.c
+solution2.o : $(SRC)/solution2.c
+	$(CC) -c $(CFLAGS) $(SRC)/solution2.c
 lambda.o   : $(SRC)/lambda.c
 	$(CC) -c $(CFLAGS) $(SRC)/lambda.c
 sbas.o     : $(SRC)/sbas.c
@@ -94,7 +94,7 @@ rtkcmn2.o   : $(SRC)/rtklib.h
 rtksvr.o   : $(SRC)/rtklib.h
 rtkpos.o   : $(SRC)/rtklib.h
 geoid.o    : $(SRC)/rtklib.h
-solution.o : $(SRC)/rtklib.h
+solution2.o : $(SRC)/rtklib.h
 lambda.o   : $(SRC)/rtklib.h
 sbas.o     : $(SRC)/rtklib.h
 rcvraw.o   : $(SRC)/rtklib.h
