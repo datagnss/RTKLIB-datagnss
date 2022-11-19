@@ -1640,8 +1640,6 @@ int main(int argc, char **argv)
     fprintf(stderr,"rtk server start...\n");
     if (!startsvr(NULL)) return -1;
    
-    signal(SIGINT, Stop); /* keyboard interrupt */
-   
     while (!intflg) {
         sleepms(100);
         Stop2();
