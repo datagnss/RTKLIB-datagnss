@@ -1355,7 +1355,7 @@ static void *con_thread(void *arg)
     const char *cmds[]={
         "start","stop","restart","solution","status","satellite","observ",
         "navidata","stream","ssr","error","option","set","load","save","log",
-        "help","?","exit","shutdown",""
+        "help","?","exit","shutdown_",""
     };
     con_t *con=(con_t *)arg;
     int i,j,narg;
@@ -1418,7 +1418,7 @@ static void *con_thread(void *arg)
                 if (con->vt->type) con->state=0;
                 break;
             case 19: /* shutdown */
-                if (!strcmp(args[0],"shutdown")) {
+                if (!strcmp(args[0],"shutdown_")) {
                     vt_printf(con->vt,"rtk server shutdown ...\n");
                     sleepms(1000);
                     intflg=1;
@@ -1538,7 +1538,10 @@ void Stop2()
     file = fopen("/home/linaro/.rtkstatus", "r");
     if (file) {
       c = getc(file);
-      if ( c == '1' ) intflg=1;
+      if ( c == '1' ) {
+        sleepms(500);
+        intflg=1;
+      }
       fclose(file);
     }
 }
