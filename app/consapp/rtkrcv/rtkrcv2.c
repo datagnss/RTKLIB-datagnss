@@ -58,7 +58,7 @@
 #define MAXCON      32                  /* max number of consoles */
 #define MAXARG      10                  /* max number of args in a command */
 #define MAXCMD      256                 /* max length of a command */
-#define MAXSTR      1024                /* max length of a stream */
+#define MAXSTR      2048                /* max length of a stream */
 #define OPTSDIR     "/data/rtk"                 /* default config directory */
 #define OPTSFILE    "rtkrcv.conf"       /* default config file */
 #define NAVIFILE    "/data/rtk/rtkrcv.nav"        /* navigation save file */
@@ -394,14 +394,72 @@ static void readant(vt_t *vt, prcopt_t *opt, nav_t *nav)
     free(pcvr.pcv); free(pcvs.pcv);
 }
 
+char cmd1[MAXRCVCMD]="# 1Hz for cmd
+!HEX F1 D9 06 44 10 00 00 00 01 00 01 00 00 00 E8 03 00 00 00 00 00 00 47 13
 
+!WAIT 100
+# disable BDGEO
+!HEX F1 D9 06 16 0A 00 02 00 04 00 01 00 03 00 05 00 35 3A 
+
+# survey mode 30s 3m to fill the fixed pos
+!HEX F1 D9 06 12 08 00 1E 00 00 00 B8 0B 00 00 01 4F
+
+# disable some extra msg list
+# disable GGA/GLL/GSA/GRS/GSV/RMC/VTG/ZDA/TXT
+!HEX F1 D9 06 01 03 00 F0 00 00 FA 0F
+!HEX F1 D9 06 01 03 00 F0 01 00 FB 11
+!HEX F1 D9 06 01 03 00 F0 02 00 FC 13
+!HEX F1 D9 06 01 03 00 F0 03 00 FD 15 
+!HEX F1 D9 06 01 03 00 F0 04 00 FE 17
+!HEX F1 D9 06 01 03 00 F0 05 00 FF 19
+!HEX F1 D9 06 01 03 00 F0 06 00 00 1B
+!HEX F1 D9 06 01 03 00 F0 07 00 01 1D
+!HEX F1 D9 06 01 03 00 F0 08 00 02 1F
+!HEX F1 D9 06 01 03 00 F0 20 00 1A 4F 
+
+!WAIT 200
+
+# disable,1005
+!HEX F1 D9 06 01 03 00 F8 05 00 07 31
+
+# disable,1074/1084/1094/1114/1124,MSM4
+!HEX F1 D9 06 01 03 00 F8 4A 00 4C BB
+!HEX F1 D9 06 01 03 00 F8 54 00 56 CF
+!HEX F1 D9 06 01 03 00 F8 58 00 5A DF
+!HEX F1 D9 06 01 03 00 F8 72 00 74 0B
+!HEX F1 D9 06 01 03 00 F8 7C 00 7E 1F
+
+# enable eph
+!HEX F1 D9 06 01 03 00 F8 13 05 1A 52
+!HEX F1 D9 06 01 03 00 F8 14 05 1B 54
+!HEX F1 D9 06 01 03 00 F8 2A 05 31 80
+!HEX F1 D9 06 01 03 00 F8 2C 05 33 84
+!HEX F1 D9 06 01 03 00 F8 2D 05 34 86 
+
+# enable,1077,1087,1097,1117,1127,MSM7
+!HEX F1 D9 06 01 03 00 F8 4D 01 50 C2
+!HEX F1 D9 06 01 03 00 F8 57 01 5A D6
+!HEX F1 D9 06 01 03 00 F8 61 01 64 EA
+!HEX F1 D9 06 01 03 00 F8 75 01 78 12 
+!HEX F1 D9 06 01 03 00 F8 7F 01 82 26
+
+# enable,1074/1084/1094/1114/1124,MSM4
+#!HEX F1 D9 06 01 03 00 F8 4A 01 4D BC
+#!HEX F1 D9 06 01 03 00 F8 54 01 57 D0
+#!HEX F1 D9 06 01 03 00 F8 58 01 5B D8
+#!HEX F1 D9 06 01 03 00 F8 72 01 75 0C
+#!HEX F1 D9 06 01 03 00 F8 7C 01 7F 20
+
+# set output rate to 10hz
+!HEX F1 D9 06 44 10 00 00 00 01 00 01 00 00 00 64 00 00 00 00 00 00 00 C0 DE 
+";
 
 /* start rtk server ----------------------------------------------------------*/
 static int startsvr(vt_t *vt)
 {
     static sta_t sta[MAXRCV]={{""}};
     double pos[3],npos[3];
-    char s1[3][MAXRCVCMD]={"","",""},*cmds[]={NULL,NULL,NULL};
+    char s1[3][MAXRCVCMD]={"","",""},*cmds[]={cmd1,NULL,NULL};
     char s2[3][MAXRCVCMD]={"","",""},*cmds_periodic[]={NULL,NULL,NULL};
     char *ropts[]={"","",""};
     char *paths[]={
@@ -413,18 +471,8 @@ static int startsvr(vt_t *vt)
     
     trace(3,"startsvr:\n");
     
-    /* read start commads from command files */
-    for (i=0;i<3;i++) {
-        if (!*rcvcmds[i]) continue;
-        if (!readcmd(rcvcmds[i],s1[i],0)) {
-            vt_printf(vt,"no command file: %s\n",rcvcmds[i]);
-        }
-        else cmds[i]=s1[i];
-        if (!readcmd(rcvcmds[i],s2[i],2)) {
-            vt_printf(vt,"no command file: %s\n",rcvcmds[i]);
-        }
-        else cmds_periodic[i]=s2[i];
-    }
+
+
     /* confirm overwrite */
     for (i=3;i<8;i++) {
         if (strtype[i]==STR_FILE&&!confwrite(vt,strpath[i])) return 0;
