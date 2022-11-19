@@ -1719,8 +1719,8 @@ extern int outsols(uint8_t *buff, const sol_t *sol, const double *rb,
         case SOLF_LLH:  p+=outpos (p,s,sol,opt);   break;
         case SOLF_XYZ:  p+=outecef(p,s,sol,opt);   break;
         case SOLF_ENU:  p+=outenu(p,s,sol,rb,opt); break;
-        case SOLF_NMEA: p+=outnmea_rmc(p,sol);
-                        p+=outnmea_gga(p,sol); break;
+        case SOLF_NMEA: p+=outnmea_gga(p,sol);
+                        p+=outnmea_rmc(p,sol); break;
     }
     return (int)(p-buff);
 }
