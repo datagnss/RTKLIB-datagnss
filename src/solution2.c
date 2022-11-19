@@ -1323,14 +1323,6 @@ extern int outnmea_gst(uint8_t *buff, const sol_t *sol, const ssat_t *ssat)
 	int sat;
 	int count_rms = 0;
 
-//	if (sol->type == 0) {
-//        ecef2pos(sol->rr, pos);
-//        soltocov(sol, P);
-//        covenu(pos, P, Q);
-//    }
-//    else {
-//
-//    }
     soltocov(sol, Q);
 
 	time = gpst2utc(sol->time);
