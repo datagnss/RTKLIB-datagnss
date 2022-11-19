@@ -1820,7 +1820,11 @@ int main(int argc, char **argv)
     /* save navigation data */
     if (!savenav(NAVIFILE,&svr.nav)) {
         fprintf(stderr,"navigation data save error: %s\n",NAVIFILE);
-    }
+    } 
+    else
+        fprintf(stderr,"save navigation data successful.");
+
+        
     traceclose();
     return 0;
 }
