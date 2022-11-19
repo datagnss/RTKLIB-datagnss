@@ -80,7 +80,7 @@
  And rnx2rtkp GNxxx output is not plotted by RTKPLOT, whereas GPxxx output is 
 
  So, This NMEA Talker ID used to be "GN" but now its "GP" */
-#define NMEA_TID   "GP"         /* NMEA talker ID for RMC and GGA sentences */
+#define NMEA_TID   "GN"         /* NMEA talker ID for RMC and GGA sentences */
 #define MAXFIELD   64           /* max number of fields in a record */
 #define MAXNMEA    256          /* max length of nmea sentence */
 
@@ -1750,9 +1750,9 @@ extern int outsolexs(uint8_t *buff, const sol_t *sol, const ssat_t *ssat,
         if (!screent(sol->time,ts,ts,opt->nmeaintv[1])) return 0;
     }
     if (opt->posf==SOLF_NMEA) {
-        p+=outnmea_gst(p,sol,ssat);
         p+=outnmea_gsa(p,sol,ssat);
         p+=outnmea_gsv(p,sol,ssat);
+        p+=outnmea_gst(p,sol,ssat);
     }
     return (int)(p-buff);
 }
