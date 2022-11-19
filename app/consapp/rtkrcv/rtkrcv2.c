@@ -95,10 +95,10 @@ static int timetype     =0;             /* time format (0:gpst,1:utc,2:jst,3:tow
 static int soltype      =0;             /* sol format (0:dms,1:deg,2:xyz,3:enu,4:pyl) */
 static int solflag      =2;             /* sol flag (1:std+2:age/ratio/ns) */
 static int strtype[]={                  /* stream types */
-    STR_TCPCLI,STR_NTRIPCLI,STR_NONE,STR_TCPSVR,STR_TCPSVR,STR_NONE,STR_NONE,STR_NONE
+    STR_TCPCLI,STR_TCPSVR,STR_NONE,STR_TCPSVR,STR_TCPSVR,STR_NONE,STR_NONE,STR_NONE
 };
 
-static char strpath[8][MAXSTR]={"localhost:6799","","",":52004",":52005","","",""}; /* stream paths */
+static char strpath[8][MAXSTR]={"localhost:6799",":52002","",":52004",":52005","","",""}; /* stream paths */
 static int strfmt[]={                   /* stream formats */
     STRFMT_RTCM3,STRFMT_RTCM3,STRFMT_SP3,SOLF_LLH,SOLF_NMEA
 };
@@ -1732,7 +1732,7 @@ int main(int argc, char **argv)
 {
     con_t *con[MAXCON]={0};
     int i,port=8077,outstat=0,trace=0,sock=0;
-    char file[MAXSTR]="";
+    
     
     for (i=1;i<argc;i++) {
         if      (!strcmp(argv[i],"-s")) start=1;
@@ -1749,15 +1749,8 @@ int main(int argc, char **argv)
     /* initialize rtk server and monitor port */
     rtksvrinit(&svr);
     strinit(&moni);
-    
-    /* load options file */
-    if (!*file) sprintf(file,"%s/%s",OPTSDIR,OPTSFILE);
-    
-    resetsysopts();
 
-    if (!loadopts(file,rcvopts)||!loadopts(file,sysopts)) {
-        fprintf(stderr,"no options file: %s. defaults used\n",file);
-    }
+    resetsysopts();
     
     getsysopts(&prcopt,solopt,&filopt);
     
