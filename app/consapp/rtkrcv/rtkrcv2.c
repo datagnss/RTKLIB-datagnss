@@ -1773,6 +1773,9 @@ int main(int argc, char **argv)
         else if (!strcmp(argv[i],"-sta")&&i+1<argc) strcpy(sta_name,argv[++i]);
         else printusage();
     }
+
+    fprintf(stderr,"%d,%s",strtype[0],strpath[0]);
+    
     if (trace>0) {
         traceopen(TRACEFILE);
         tracelevel(trace);
