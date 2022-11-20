@@ -394,7 +394,7 @@ static void readant(vt_t *vt, prcopt_t *opt, nav_t *nav)
     free(pcvr.pcv); free(pcvs.pcv);
 }
 
-char cmd1[MAXRCVCMD]="# 1Hz for cmd \
+static char cmd1[MAXRCVCMD]="# 1Hz for cmd \
 !HEX F1 D9 06 44 10 00 00 00 01 00 01 00 00 00 E8 03 00 00 00 00 00 00 47 13 \
 !WAIT 100 \
 # disable BDGEO \
