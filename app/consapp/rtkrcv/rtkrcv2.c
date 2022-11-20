@@ -1765,7 +1765,8 @@ int main(int argc, char **argv)
     
     for (i=1;i<argc;i++) {
         if      (!strcmp(argv[i],"-s")) start=1;
-        else if (!strcmp(argv[i],"-in")&&i+1<argc) strcpy(strpath[0],argv[++i]);
+        else if (!strcmp(argv[i],"-in")&&i+1<argc) strcpy(strpath[0],argv[++i]); /*strpath*/
+        else if (!strcmp(argv[i],"-d")&&i+1<argc) strtype[0]=atoi(argv[++i]); /*strtype*/
         else if (!strcmp(argv[i],"-m")) moniport=8078;
         else if (!strcmp(argv[i],"-r")&&i+1<argc) outstat=atoi(argv[++i]);
         else if (!strcmp(argv[i],"-t")&&i+1<argc) trace=atoi(argv[++i]);
