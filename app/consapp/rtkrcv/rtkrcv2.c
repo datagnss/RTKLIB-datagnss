@@ -399,8 +399,6 @@ char cmd1[MAXRCVCMD]="# 1Hz for cmd \
 !WAIT 100 \
 # disable BDGEO \
 !HEX F1 D9 06 16 0A 00 02 00 04 00 01 00 03 00 05 00 35 3A \
-# survey mode 30s 3m to fill the fixed pos \
-!HEX F1 D9 06 12 08 00 1E 00 00 00 B8 0B 00 00 01 4F \
 # disable some extra msg list \
 # disable GGA/GLL/GSA/GRS/GSV/RMC/VTG/ZDA/TXT \
 !HEX F1 D9 06 01 03 00 F0 00 00 FA 0F \
@@ -1774,8 +1772,8 @@ int main(int argc, char **argv)
         else printusage();
     }
 
-    fprintf(stderr,"%d,%s",strtype[0],strpath[0]);
-    
+    fprintf(stderr,"%d,%s\n",strtype[0],strpath[0]);
+
     if (trace>0) {
         traceopen(TRACEFILE);
         tracelevel(trace);
