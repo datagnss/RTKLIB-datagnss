@@ -453,8 +453,6 @@ static int startsvr(vt_t *vt)
     int i,ret,stropt[8]={0};
     
     trace(3,"startsvr:\n");
-    
-
 
     /* confirm overwrite */
     for (i=3;i<8;i++) {
@@ -1767,6 +1765,7 @@ int main(int argc, char **argv)
     
     for (i=1;i<argc;i++) {
         if      (!strcmp(argv[i],"-s")) start=1;
+        else if (!strcmp(argv[i],"-in")&&i+1<argc) strcpy(strpath[0],argv[++i]);
         else if (!strcmp(argv[i],"-m")) moniport=8078;
         else if (!strcmp(argv[i],"-r")&&i+1<argc) outstat=atoi(argv[++i]);
         else if (!strcmp(argv[i],"-t")&&i+1<argc) trace=atoi(argv[++i]);
