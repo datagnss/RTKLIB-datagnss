@@ -394,12 +394,12 @@ static void readant(vt_t *vt, prcopt_t *opt, nav_t *nav)
     free(pcvr.pcv); free(pcvs.pcv);
 }
 
-static char cmd1[MAXRCVCMD]="# 1Hz for cmd \
+static char cmd1[MAXRCVCMD]="# 1Hz for cmd\n \
 !HEX F1 D9 06 44 10 00 00 00 01 00 01 00 00 00 E8 03 00 00 00 00 00 00 47 13\n \
 !WAIT 200\n \
 # set nav-sat\n \
 !HEX F1 D9 06 0C 04 00 25 82 00 04 C1 BA\n \
-!WAIT 200
+!WAIT 200\n \
 # disable BDGEO\n \
 !HEX F1 D9 06 16 0A 00 02 00 04 00 01 00 03 00 05 00 35 3A\n \
 # disable some extra msg list\n \
