@@ -401,17 +401,11 @@ static int startsvr(vt_t *vt)
     static sta_t sta[MAXRCV]={{""}};
     double pos[3],npos[3];
     char s1[3][MAXRCVCMD]={"","",""};
-    char *cmds[]={"# 1Hz for cmd\n \
-!HEX F1 D9 06 44 10 00 00 00 01 00 01 00 00 00 E8 03 00 00 00 00 00 00 47 13\n \
-!WAIT 200\n \
-# set nav-sat\n \
+    char *cmds[]={"!HEX F1 D9 06 44 10 00 00 00 01 00 01 00 00 00 E8 03 00 00 00 00 00 00 47 13\n \
 !HEX F1 D9 06 0C 04 00 35 82 10 04 E1 1A\n \
-!WAIT 200\n \
-# disable BDGEO\n \
+!WAIT 100\n \
 !HEX F1 D9 06 16 0A 00 02 00 04 00 01 00 03 00 05 00 35 3A\n \
-!WAIT 200\n \
-# disable some extra msg list\n \
-# disable GGA/GLL/GSA/GRS/GSV/RMC/VTG/ZDA/TXT\n \
+!WAIT 100\n \
 !HEX F1 D9 06 01 03 00 F0 00 00 FA 0F\n \
 !HEX F1 D9 06 01 03 00 F0 01 00 FB 11\n \
 !HEX F1 D9 06 01 03 00 F0 02 00 FC 13\n \
@@ -422,31 +416,25 @@ static int startsvr(vt_t *vt)
 !HEX F1 D9 06 01 03 00 F0 07 00 01 1D\n \
 !HEX F1 D9 06 01 03 00 F0 08 00 02 1F\n \
 !HEX F1 D9 06 01 03 00 F0 20 00 1A 4F\n  \
-!WAIT 200\n \
-# disable,1005\n \
+!WAIT 100\n \
 !HEX F1 D9 06 01 03 00 F8 05 00 07 31\n \
-# disable,1074/1084/1094/1114/1124,MSM4\n \
 !HEX F1 D9 06 01 03 00 F8 4A 00 4C BB\n \
 !HEX F1 D9 06 01 03 00 F8 54 00 56 CF\n \
 !HEX F1 D9 06 01 03 00 F8 58 00 5A DF\n \
 !HEX F1 D9 06 01 03 00 F8 72 00 74 0B\n \
 !HEX F1 D9 06 01 03 00 F8 7C 00 7E 1F\n \
-!WAIT 200\n \
-# enable eph\n \
+!WAIT 100\n \
 !HEX F1 D9 06 01 03 00 F8 13 05 1A 52\n \
 !HEX F1 D9 06 01 03 00 F8 14 05 1B 54\n \
 !HEX F1 D9 06 01 03 00 F8 2A 05 31 80\n \
 !HEX F1 D9 06 01 03 00 F8 2C 05 33 84\n \
 !HEX F1 D9 06 01 03 00 F8 2D 05 34 86\n  \
-!WAIT 200\n \
-# enable,1077,1087,1097,1117,1127,MSM7\n \
 !HEX F1 D9 06 01 03 00 F8 4D 01 50 C2\n \
 !HEX F1 D9 06 01 03 00 F8 57 01 5A D6\n \
 !HEX F1 D9 06 01 03 00 F8 61 01 64 EA\n \
 !HEX F1 D9 06 01 03 00 F8 75 01 78 12\n  \
 !HEX F1 D9 06 01 03 00 F8 7F 01 82 26\n \
-!WAIT 200\n \
-# set output rate to 10hz\n \
+!WAIT 100\n \
 !HEX F1 D9 06 44 10 00 00 00 01 00 01 00 00 00 64 00 00 00 00 00 00 00 C0 DE\n\n",
 NULL,
 NULL};
