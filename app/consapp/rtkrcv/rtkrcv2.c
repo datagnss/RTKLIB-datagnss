@@ -1768,6 +1768,8 @@ int main(int argc, char **argv)
 {
     con_t *con[MAXCON]={0};
     int i,port=8077,outstat=0,trace=0,sock=0;
+    char debugfile[MAXSTR]="";
+
     
     
     for (i=1;i<argc;i++) {
@@ -1777,6 +1779,7 @@ int main(int argc, char **argv)
         else if (!strcmp(argv[i],"-m")) moniport=8078;
         else if (!strcmp(argv[i],"-r")&&i+1<argc) outstat=atoi(argv[++i]);
         else if (!strcmp(argv[i],"-t")&&i+1<argc) trace=atoi(argv[++i]);
+        else if (!strcmp(argv[i],"-debug")&&i+1<argc) strcpy(debugfile,argv[++i]);
         else if (!strcmp(argv[i],"-sta")&&i+1<argc) strcpy(sta_name,argv[++i]);
         else printusage();
     }
@@ -1784,7 +1787,7 @@ int main(int argc, char **argv)
     fprintf(stderr,"%d,%s\n",strtype[0],strpath[0]);
 
     if (trace>0) {
-        traceopen(TRACEFILE);
+        traceopen(debugfile);
         tracelevel(trace);
     }
     /* initialize rtk server and monitor port */
