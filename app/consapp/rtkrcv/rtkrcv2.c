@@ -402,6 +402,7 @@ static char cmd1[MAXRCVCMD]="# 1Hz for cmd\n \
 !WAIT 200\n \
 # disable BDGEO\n \
 !HEX F1 D9 06 16 0A 00 02 00 04 00 01 00 03 00 05 00 35 3A\n \
+!WAIT 200\n \
 # disable some extra msg list\n \
 # disable GGA/GLL/GSA/GRS/GSV/RMC/VTG/ZDA/TXT\n \
 !HEX F1 D9 06 01 03 00 F0 00 00 FA 0F\n \
@@ -423,18 +424,21 @@ static char cmd1[MAXRCVCMD]="# 1Hz for cmd\n \
 !HEX F1 D9 06 01 03 00 F8 58 00 5A DF\n \
 !HEX F1 D9 06 01 03 00 F8 72 00 74 0B\n \
 !HEX F1 D9 06 01 03 00 F8 7C 00 7E 1F\n \
+!WAIT 200\n \
 # enable eph\n \
 !HEX F1 D9 06 01 03 00 F8 13 05 1A 52\n \
 !HEX F1 D9 06 01 03 00 F8 14 05 1B 54\n \
 !HEX F1 D9 06 01 03 00 F8 2A 05 31 80\n \
 !HEX F1 D9 06 01 03 00 F8 2C 05 33 84\n \
 !HEX F1 D9 06 01 03 00 F8 2D 05 34 86\n  \
+!WAIT 200\n \
 # enable,1077,1087,1097,1117,1127,MSM7\n \
 !HEX F1 D9 06 01 03 00 F8 4D 01 50 C2\n \
 !HEX F1 D9 06 01 03 00 F8 57 01 5A D6\n \
 !HEX F1 D9 06 01 03 00 F8 61 01 64 EA\n \
 !HEX F1 D9 06 01 03 00 F8 75 01 78 12\n  \
 !HEX F1 D9 06 01 03 00 F8 7F 01 82 26\n \
+!WAIT 200\n \
 # set output rate to 10hz\n \
 !HEX F1 D9 06 44 10 00 00 00 01 00 01 00 00 00 64 00 00 00 00 00 00 00 C0 DE\n\n";
 
