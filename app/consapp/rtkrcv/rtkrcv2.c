@@ -402,6 +402,7 @@ static int startsvr(vt_t *vt)
     double pos[3],npos[3];
     char s1[3][MAXRCVCMD]={"","",""};
     char *cmds[]={"!HEX F1 D9 06 44 10 00 00 00 01 00 01 00 00 00 E8 03 00 00 00 00 00 00 47 13\n \
+!WAIT 100\n \
 !HEX F1 D9 06 0C 04 00 35 82 10 04 E1 1A\n \
 !WAIT 100\n \
 !HEX F1 D9 06 16 0A 00 02 00 04 00 01 00 03 00 05 00 35 3A\n \
