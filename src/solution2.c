@@ -1759,7 +1759,7 @@ extern int outsolexs(uint8_t *buff, const sol_t *sol, const ssat_t *ssat,
     if (opt->posf==SOLF_NMEA) {
         p+=outnmea_gsa(p,sol,ssat);
         p+=outnmea_gsv(p,sol,ssat);
-        if (!(sol->stat<=SOLQ_NONE||(opt->posf==SOLF_ENU&&norm(rb,3)<=0.0)))
+        if (!(sol->stat<=SOLQ_NONE||opt->posf==SOLF_ENU))
             p+=outnmea_gst(p,sol,ssat);
     }
     return (int)(p-buff);
