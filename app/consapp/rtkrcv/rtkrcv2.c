@@ -443,8 +443,8 @@ static int msm_type=7;
 /* generate cmds */
 void gen_cmds()
 {
-    sprintf(rov_cmd,"%s\n%s\n%s\n%s\n%s\n%s\n%s\n",cmd_1hz,cmd_nmea_disable,cmd_wait_100_ms,
-    cmd_rtcm1005_disable,cmd_wait_100_ms,cmd_msm7_disable,cmd_msm4_disable);
+    sprintf(rov_cmd,"%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n",cmd_1hz,cmd_nmea_disable,cmd_wait_100_ms,
+    cmd_rtcm1005_disable,cmd_wait_100_ms,cmd_msm7_disable,cmd_wait_100_ms,cmd_msm4_disable,cmd_wait_100_ms);
 
     if (msm_type==7)
     sprintf(rov_cmd,"%s\n%s\n%s\n",rov_cmd,cmd_msm7_enable,cmd_wait_100_ms);
