@@ -436,7 +436,7 @@ void gen_cmds()
     else if (update_rate==10)
       sprintf(rov_cmd,"%s\n%s\n",cmds,cmd_10hz);
     else
-      fprintf(std_err,"invalid update rate.\n");
+      fprintf(stderr,"invalid update rate.\n");
 }
 
 /* start rtk server ----------------------------------------------------------*/
