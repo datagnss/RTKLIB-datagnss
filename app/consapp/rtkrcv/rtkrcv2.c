@@ -494,6 +494,9 @@ NULL};
     
     trace(3,"startsvr:\n");
 
+    trace(3,"gen_cmds:\n");
+    gen_cmds();
+
     /* confirm overwrite */
     for (i=3;i<8;i++) {
         if (strtype[i]==STR_FILE&&!confwrite(vt,strpath[i])) return 0;
