@@ -419,7 +419,8 @@ static char cmd_nmea_disable[]="!HEX F1 D9 06 01 03 00 F0 00 00 FA 0F F1 D9 06 0
 static char cmd_wait_100_ms[]="!WAIT 100\n";
 static char cmd_wait_500_ms[]="!WAIT 500\n";
 
-int update_rate=1;
+static int update_rate=1;
+static int msm_type=7;
 
 /* generate cmds */
 void gen_cmds()
@@ -427,8 +428,12 @@ void gen_cmds()
     sprintf(rov_cmd,"%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n",cmd_1hz,cmd_nmea_disable,cmd_wait_100_ms,cmd_eph_disable,cmd_wait_100_ms,
     cmd_rtcm1005_disable,cmd_wait_100_ms,cmd_msm7_disable,cmd_msm4_disable);
 
+    if (msm_type==7)
     sprintf(rov_cmd,"%s\n%s\n",rov_cmd,cmd_msm7_enable);
-    
+    else if (msm_type==4)
+    sprintf(rov_cmd,"%s\n%s\n",rov_cmd,cmd_msm4_enable);
+    else fprintf(stderr,"invalid MSM type.\n");
+
     if (update_rate==1)
       sprintf(rov_cmd,"%s\n%s\n",rov_cmd,cmd_1hz);
     else if (update_rate==5)
@@ -1776,6 +1781,7 @@ int main(int argc, char **argv)
         else if (!strcmp(argv[i],"-d")&&i+1<argc) strtype[0]=atoi(argv[++i]); /*strtype*/
         else if (!strcmp(argv[i],"-m")) moniport=8078;
         else if (!strcmp(argv[i],"--rate")&&i+1<argc) update_rate=atoi(argv[++i]);
+        else if (!strcmp(argv[i],"--msm")&&i+1<argc) msm_type=atoi(argv[++i]);
         else if (!strcmp(argv[i],"-r")&&i+1<argc) outstat=atoi(argv[++i]);
         else if (!strcmp(argv[i],"-t")&&i+1<argc) trace=atoi(argv[++i]);
         else if (!strcmp(argv[i],"-debug")&&i+1<argc) strcpy(debugfile,argv[++i]);
