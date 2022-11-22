@@ -114,6 +114,7 @@ static double nmeapos[] ={0,0,0};       /* nmea position (lat/lon/height) (deg,m
 static char rcvcmds[3][MAXSTR]={"","",""};    /* receiver commands files */
 static char startcmd[MAXSTR]="";        /* start command */
 static char stopcmd [MAXSTR]="";        /* stop command */
+static char rov_cmd[MAXRCVCMD]=""; /*rover cmd*/
 static int modflgr[256] ={0};           /* modified flags of receiver options */
 static int modflgs[256] ={0};           /* modified flags of system options */
 static int moniport     =0;             /* monitor port 8078 */
@@ -394,6 +395,49 @@ static void readant(vt_t *vt, prcopt_t *opt, nav_t *nav)
     free(pcvr.pcv); free(pcvs.pcv);
 }
 
+/*constant cmd for module*/
+static char cmd_1hz[MAXRCVCMD]="!HEX F1 D9 06 44 10 00 00 00 01 00 01 00 00 00 E8 03 00 00 00 00 00 00 47 13\n";
+static char cmd_5hz[MAXRCVCMD]="!HEX F1 D9 06 44 10 00 00 00 01 00 01 00 00 00 C8 00 00 00 00 00 00 00 24 FE\n";
+static char cmd_10hz[MAXRCVCMD]="!HEX F1 D9 06 44 10 00 00 00 01 00 01 00 00 00 64 00 00 00 00 00 00 00 C0 DE\n";
+static char cmd_rtcm1005_enable[MAXRCVCMD]="";
+static char cmd_rtcm1005_disable[MAXRCVCMD]="!HEX F1 D9 06 01 03 00 F8 05 00 07 31";
+static char cmd_msm7_enable[MAXRCVCMD]="!HEX F1 D9 06 01 03 00 F8 4D 01 50 C2 F1 D9 06 01 03 00 F8 57 01 5A D6 F1 D9 06 01 03 00 F8 61 01 64 EA\n \
+!HEX F1 D9 06 01 03 00 F8 75 01 78 12 F1 D9 06 01 03 00 F8 7F 01 82 26";
+static char cmd_msm7_disable[MAXRCVCMD]="!HEX F1 D9 06 01 03 00 F8 4D 00 4F C1 F1 D9 06 01 03 00 F8 57 00 59 D5 F1 D9 06 01 03 00 F8 61 00 63 E9\n \
+!HEX F1 D9 06 01 03 00 F8 75 00 77 11 F1 D9 06 01 03 00 F8 7F 00 81 25";
+static char cmd_msm4_enable[MAXRCVCMD]="";
+static char cmd_msm4_disable[MAXRCVCMD]="!HEX F1 D9 06 01 03 00 F8 4A 00 4C BB F1 D9 06 01 03 00 F8 54 00 56 CF F1 D9 06 01 03 00 F8 58 00 5A DF\n \
+!HEX F1 D9 06 01 03 00 F8 72 00 74 0B F1 D9 06 01 03 00 F8 7C 00 7E 1F";
+static char cmd_eph_enable[MAXRCVCMD]="!HEX F1 D9 06 01 03 00 F8 13 05 1A 52 F1 D9 06 01 03 00 F8 14 05 1B 54 F1 D9 06 01 03 00 F8 2A 05 31 80\n \
+!HEX F1 D9 06 01 03 00 F8 2C 05 33 84 F1 D9 06 01 03 00 F8 2D 05 34 86";
+static char cmd_eph_disable[MAXRCVCMD]="";
+static char cmd_nmea_enable[MAXRCVCMD]="";
+static char cmd_nmea_disable[MAXRCVCMD]="!HEX F1 D9 06 01 03 00 F0 00 00 FA 0F F1 D9 06 01 03 00 F0 01 00 FB 11 F1 D9 06 01 03 00 F0 02 00 FC 13\n \
+!HEX F1 D9 06 01 03 00 F0 03 00 FD 15 F1 D9 06 01 03 00 F0 04 00 FE 17 F1 D9 06 01 03 00 F0 05 00 FF 19\n \
+!HEX F1 D9 06 01 03 00 F0 06 00 00 1B F1 D9 06 01 03 00 F0 07 00 01 1D F1 D9 06 01 03 00 F0 08 00 02 1F\n \
+!HEX F1 D9 06 01 03 00 F0 20 00 1A 4F";
+static char cmd_wait_100_ms[32]="!WAIT 100\n";
+static char cmd_wait_500_ms[32]="!WAIT 500\n";
+
+int update_rate=1;
+
+/* generate cmds */
+void gen_cmds()
+{
+    sprintf(rov_cmd,"%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n",cmd_1hz,cmd_nmea_disable,cmd_wait_100_ms,cmd_eph_disable,cmd_wait_100_ms,
+    cmd_rtcm1005_disable,cmd_wait_100_ms,cmd_msm7_disable,cmd_msm4_disable);
+
+    sprintf(rov_cmd,"%s\n%s\n",cmds,cmd_msm7_enable);
+    
+    if (update_rate==1)
+      sprintf(rov_cmd,"%s\n%s\n",cmds,cmd_1hz);
+    else if (update_rate==5)
+      sprintf(rov_cmd,"%s\n%s\n",cmds,cmd_5hz);
+    else if (update_rate==10)
+      sprintf(rov_cmd,"%s\n%s\n",cmds,cmd_10hz);
+    else
+      fprintf(std_err,"invalid update rate.\n");
+}
 
 /* start rtk server ----------------------------------------------------------*/
 static int startsvr(vt_t *vt)
@@ -401,7 +445,8 @@ static int startsvr(vt_t *vt)
     static sta_t sta[MAXRCV]={{""}};
     double pos[3],npos[3];
     char s1[3][MAXRCVCMD]={"","",""};
-    char *cmds[]={"#1Hz\n!HEX F1 D9 06 44 10 00 00 00 01 00 01 00 00 00 E8 03 00 00 00 00 00 00 47 13\n \
+    char *cmds[]={rov_cmd,NULL,NULL};
+    char *cmds1[]={"#1Hz\n!HEX F1 D9 06 44 10 00 00 00 01 00 01 00 00 00 E8 03 00 00 00 00 00 00 47 13\n \
 #Nav-sat\n!HEX F1 D9 06 0C 04 00 35 82 10 04 E1 1A\n \
 !WAIT 100\n \
 !HEX F1 D9 06 16 0A 00 02 00 04 00 01 00 03 00 05 00 35 3A\n \
@@ -1763,6 +1808,7 @@ int main(int argc, char **argv)
         else if (!strcmp(argv[i],"-in")&&i+1<argc) strcpy(strpath[0],argv[++i]); /*strpath*/
         else if (!strcmp(argv[i],"-d")&&i+1<argc) strtype[0]=atoi(argv[++i]); /*strtype*/
         else if (!strcmp(argv[i],"-m")) moniport=8078;
+        else if (!strcmp(argv[i],"--rate")&&i+1<argc) update_rate=atoi(argv[++i]);
         else if (!strcmp(argv[i],"-r")&&i+1<argc) outstat=atoi(argv[++i]);
         else if (!strcmp(argv[i],"-t")&&i+1<argc) trace=atoi(argv[++i]);
         else if (!strcmp(argv[i],"-debug")&&i+1<argc) strcpy(debugfile,argv[++i]);
