@@ -1792,6 +1792,8 @@ int main(int argc, char **argv)
     con_t *con[MAXCON]={0};
     int i,port=8077,outstat=0,trace=0,sock=0;
     char debugfile[MAXSTR]="";
+    int posmode=PMODE_SINGLE;
+    double baselen=0.0,baseerr=0.0;
     
     for (i=1;i<argc;i++) {
         if      (!strcmp(argv[i],"-s")) start=1;
@@ -1799,6 +1801,9 @@ int main(int argc, char **argv)
         else if (!strcmp(argv[i],"-d")&&i+1<argc) strtype[0]=atoi(argv[++i]); /*strtype*/
         else if (!strcmp(argv[i],"-m")) moniport=8078;
         else if (!strcmp(argv[i],"--rate")&&i+1<argc) update_rate=atoi(argv[++i]);
+        else if (!strcmp(argv[i],"--posmode")&&i+1<argc) posmode=atoi(argv[++i]);
+        else if (!strcmp(argv[i],"--baselen")&&i+1<argc) baselen=atof(argv[++i]);
+        else if (!strcmp(argv[i],"--baseerr")&&i+1<argc) baseerr=atof(argv[++i]);
         else if (!strcmp(argv[i],"--msm")&&i+1<argc) msm_type=atoi(argv[++i]);
         else if (!strcmp(argv[i],"-r")&&i+1<argc) outstat=atoi(argv[++i]);
         else if (!strcmp(argv[i],"-t")&&i+1<argc) trace=atoi(argv[++i]);
