@@ -763,8 +763,6 @@ static void prstatus(vt_t *vt)
     dops(n,azel,0.0,dop);
     
     vt_printf(vt,"\n%s%-28s: %s%s\n",ESC_BOLD,"Parameter","Value",ESC_RESET);
-    vt_printf(vt,"%-28s: %s %s\n","rtklib version",VER_RTKLIB,PATCH_LEVEL);
-    vt_printf(vt,"%-28s: %d\n","rtk server thread",thread);
     vt_printf(vt,"%-28s: %s\n","rtk server state",svrstate[state]);
     vt_printf(vt,"%-28s: %d\n","processing cycle (ms)",cycle);
     vt_printf(vt,"%-28s: %s\n","positioning mode",mode[rtk.opt.mode]);
@@ -803,8 +801,8 @@ static void prstatus(vt_t *vt)
     vt_printf(vt,"%-28s: %.3f,%.3f,%.3f,%.3f\n","time sys offset (ns)",rtk.sol.dtr[1]*1e9,
               rtk.sol.dtr[2]*1e9,rtk.sol.dtr[3]*1e9,rtk.sol.dtr[4]*1e9);
     vt_printf(vt,"%-28s: %.3f\n","solution interval (s)",rtk.tt);
-    vt_printf(vt,"%-28s: %.3f\n","age of differential (s)",rtk.sol.age);
-    vt_printf(vt,"%-28s: %.3f\n","ratio for ar validation",rtk.sol.ratio);
+    vt_printf(vt,"%-28s: %.3f\n","age(s)",rtk.sol.age);
+    vt_printf(vt,"%-28s: %.3f\n","ratio",rtk.sol.ratio);
     vt_printf(vt,"%-28s: %d\n","# of satellites rover",nsat0);
     vt_printf(vt,"%-28s: %d\n","# of satellites base",nsat1);
     vt_printf(vt,"%-28s: %d\n","# of valid satellites",rtk.sol.ns);
@@ -855,6 +853,123 @@ static void prstatus(vt_t *vt)
     vt_printf(vt,"%-28s: %d\n","receiver time mark count",rcvcount);
     vt_printf(vt,"%-28s: %d\n","rtklib time mark count",tmcount);
 }
+
+static void prstatus_cn(vt_t *vt)
+{
+    rtk_t rtk;
+    const char *svrstate[]={"stop","run"},*type[]={"rover","base","corr"};
+    const char *sol[]={"-","fix","float","SBAS","DGPS","single","PPP",""};
+    const char *mode[]={
+         "single","DGPS","kinematic","static","static-start","moving-base","fixed",
+         "PPP-kinema","PPP-static"
+    };
+    gtime_t eventime={0};
+    const char *freq[]={"-","L1","L1+L2","L1+L2+E5b","L1+L2+E5b+L5","",""};
+    rtcm_t rtcm[3];
+    int i,j,n,thread,cycle,state,rtkstat,nsat0,nsat1,prcout,rcvcount,tmcount,timevalid,nave;
+    int cputime,nb[3]={0},nmsg[3][10]={{0}};
+    char tstr[64],tmstr[64],s[1024],*p;
+    double runtime,rt[3]={0},dop[4]={0},rr[3],bl1=0.0,bl2=0.0;
+    double azel[MAXSAT*2],pos[3],vel[3],*del;
+    
+    trace(4,"prstatus:\n");
+    
+    rtksvrlock(&svr);
+    rtk=svr.rtk;
+    thread=(int)svr.thread;
+    cycle=svr.cycle;
+    state=svr.state;
+    rtkstat=svr.rtk.sol.stat;
+    nsat0=svr.obs[0][0].n;
+    nsat1=svr.obs[1][0].n;
+    rcvcount = svr.raw[0].obs.rcvcount;
+    tmcount = svr.raw[0].obs.tmcount;
+    cputime=svr.cputime;
+    prcout=svr.prcout;
+    nave=svr.nave;
+    for (i=0;i<3;i++) nb[i]=svr.nb[i];
+    for (i=0;i<3;i++) for (j=0;j<10;j++) {
+        nmsg[i][j]=svr.nmsg[i][j];
+    }
+    if (svr.state) {
+        runtime=(double)(tickget()-svr.tick)/1000.0;
+        rt[0]=floor(runtime/3600.0); runtime-=rt[0]*3600.0;
+        rt[1]=floor(runtime/60.0); rt[2]=runtime-rt[1]*60.0;
+    }
+    for (i=0;i<3;i++) rtcm[i]=svr.rtcm[i];
+    if (svr.raw[0].obs.data != NULL) {
+        timevalid = svr.raw[0].obs.data[0].timevalid;
+        eventime = svr.raw[0].obs.data[0].eventime;
+    }
+    time2str(eventime,tmstr,9);
+    rtksvrunlock(&svr);
+    
+    for (i=n=0;i<MAXSAT;i++) {
+        if (rtk.opt.mode==PMODE_SINGLE&&!rtk.ssat[i].vs) continue;
+        if (rtk.opt.mode!=PMODE_SINGLE&&!rtk.ssat[i].vsat[0]) continue;
+        azel[  n*2]=rtk.ssat[i].azel[0];
+        azel[1+n*2]=rtk.ssat[i].azel[1];
+        n++;
+    }
+    dops(n,azel,0.0,dop);
+    
+    vt_printf(vt,"\n%s%-28s: %s%s\n",ESC_BOLD,"Parameter","Value",ESC_RESET);
+    vt_printf(vt,"%-28s: %s\n","运行状态",svrstate[state]);
+    vt_printf(vt,"%-28s: %d\n","处理间隔 (ms)",cycle);
+    vt_printf(vt,"%-28s: %s\n","定位模式",mode[rtk.opt.mode]);
+    vt_printf(vt,"%-28s: %02.0f:%02.0f:%04.1f\n","运行时间",rt[0],rt[1],rt[2]);
+    vt_printf(vt,"%-28s: %d,%d\n","已处理的数据",nb[0],nb[1]);
+    for (i=0;i<3;i++) {
+        sprintf(s,"# 输入数据 %s",type[i]);
+        vt_printf(vt,"%-28s: 观测量(%d),导航数据(%d)\n",
+                s,nmsg[i][0],nmsg[i][1]);
+    }
+    for (i=0;i<3;i++) {
+        p=s; *p='\0';
+        for (j=1;j<100;j++) {
+            if (rtcm[i].nmsg2[j]==0) continue;
+            p+=sprintf(p,"%s%d(%d)",p>s?",":"",j,rtcm[i].nmsg2[j]);
+        }
+        if (rtcm[i].nmsg2[0]>0) {
+            sprintf(p,"%sother2(%d)",p>s?",":"",rtcm[i].nmsg2[0]);
+        }
+        for (j=1;j<300;j++) {
+            if (rtcm[i].nmsg3[j]==0) continue;
+            p+=sprintf(p,"%s%d(%d)",p>s?",":"",j+1000,rtcm[i].nmsg3[j]);
+        }
+        if (rtcm[i].nmsg3[0]>0) {
+            sprintf(p,"%sother3(%d)",p>s?",":"",rtcm[i].nmsg3[0]);
+        }
+        vt_printf(vt,"%-15s %-9s: %s\n","# RTCM数据",type[i],s);
+    }
+    vt_printf(vt,"%-28s: %s\n","处理状态",sol[rtkstat]);
+    time2str(rtk.sol.time,tstr,9);
+    vt_printf(vt,"%-28s: %.3f\n","更新率 (s)",rtk.tt);
+    vt_printf(vt,"%-28s: %.3f\n","AGE(s)",rtk.sol.age);
+    vt_printf(vt,"%-28s: %.3f\n","RATIO",rtk.sol.ratio);
+    vt_printf(vt,"%-28s: %d\n","# 移动站卫星",nsat0);
+    vt_printf(vt,"%-28s: %d\n","# 基准站卫星",nsat1);
+    vt_printf(vt,"%-28s: %d\n","# 共有卫星",rtk.sol.ns);
+    vt_printf(vt,"%-28s: %.1f,%.1f,%.1f,%.1f\n","GDOP/PDOP/HDOP/VDOP",dop[0],dop[1],dop[2],dop[3]);
+    if (norm(rtk.sol.rr,3)>0.0) ecef2pos(rtk.sol.rr,pos); else pos[0]=pos[1]=pos[2]=0.0;
+    vt_printf(vt,"%-28s: %.8f,%.8f,%.3f\n","移动站单点定位 (deg,m) ",
+            pos[0]*R2D,pos[1]*R2D,pos[2]);
+    ecef2enu(pos,rtk.sol.rr+3,vel);
+    
+   
+    vt_printf(vt,"%-28s: %.3f,%.3f,%.3f\n","移动站RTK (m) ",
+            rtk.xa?rtk.xa[0]:0,rtk.xa?rtk.xa[1]:0,rtk.xa?rtk.xa[2]:0);
+    vt_printf(vt,"%-28s: %.3f,%.3f,%.3f\n","移动站RTK标准差 (m) ",
+            rtk.Pa?SQRT(rtk.Pa[0]):0,rtk.Pa?SQRT(rtk.Pa[1+1*rtk.na]):0,rtk.Pa?SQRT(rtk.Pa[2+2*rtk.na]):0);
+  
+  
+    if (rtk.opt.mode>0&&rtk.xa&&norm(rtk.xa,3)>0.0) {
+        for (i=0;i<3;i++) rr[i]=rtk.xa[i]-rtk.rb[i];
+        bl2=norm(rr,3);
+    }
+    vt_printf(vt,"%-28s: %.3f\n","基线固定解 (m)",bl2);
+}
+
 /* print satellite -----------------------------------------------------------*/
 static void prsatellite(vt_t *vt, int nf)
 {
