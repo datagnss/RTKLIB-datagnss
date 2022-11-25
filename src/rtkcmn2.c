@@ -223,7 +223,7 @@ const prcopt_t prcopt_default={ /* defaults processing options */
     {"",""},                    /* anttype */
     {{0}},{{0}},{0},            /* antdel,pcv,exsats */
     1,1,1,                      /* maxaveep,initrst,outsingle */
-    {"",""},{0,0,0,1,1,0},0     /*rnxopt[2][256], posopt[], syncsol*/
+    {"",""},{0,0,0,0,1,0},0     /*rnxopt[2][256], posopt[], syncsol*/
 };
 const solopt_t solopt_default={ /* defaults solution output options */
     SOLF_LLH,TIMES_GPST,1,3,    /* posf,times,timef,timeu */
