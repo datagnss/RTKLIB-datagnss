@@ -1805,7 +1805,7 @@ extern void outsolhead(FILE *fp, const solopt_t *opt)
 *          solopt_t *opt    I   solution options
 * return : none
 *-----------------------------------------------------------------------------*/
-extern void outsol(FILE *fp, const sol_t *sol, const double *rb,
+extern void outsol(FILE *fp, const sol_t *sol, const ssat_t *ssat, const double *rb,
                    const solopt_t *opt)
 {
     uint8_t buff[MAXSOLMSG+1];
@@ -1813,7 +1813,7 @@ extern void outsol(FILE *fp, const sol_t *sol, const double *rb,
     
     trace(3,"outsol  :\n");
     
-    if ((n=outsols(buff,sol,rb,opt))>0) {
+    if ((n=outsols(buff,sol,ssat,rb,opt))>0) {
         fwrite(buff,n,1,fp);
     }
 }
