@@ -1657,7 +1657,7 @@ EXPORT int inputsol(uint8_t data, gtime_t ts, gtime_t te, double tint,
 
 EXPORT int outprcopts(uint8_t *buff, const prcopt_t *opt);
 EXPORT int outsolheads(uint8_t *buff, const solopt_t *opt);
-EXPORT int outsols  (uint8_t *buff, const sol_t *sol, const double *rb,
+EXPORT int outsols  (uint8_t *buff, const sol_t *sol, const ssat_t *ssat, const double *rb,
                      const solopt_t *opt);
 EXPORT int outsolexs(uint8_t *buff, const sol_t *sol, const ssat_t *ssat,
                      const solopt_t *opt);

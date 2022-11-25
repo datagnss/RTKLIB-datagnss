@@ -1684,7 +1684,7 @@ static double sol_std(const sol_t *sol)
 *          solopt_t *opt    I   solution options
 * return : number of output bytes
 *-----------------------------------------------------------------------------*/
-extern int outsols(uint8_t *buff, const sol_t *sol, const double *rb,
+extern int outsols(uint8_t *buff, const sol_t *sol, const ssat_t *ssat, const double *rb,
                    const solopt_t *opt)
 {
     gtime_t time,ts={0};
@@ -1727,7 +1727,8 @@ extern int outsols(uint8_t *buff, const sol_t *sol, const double *rb,
         case SOLF_XYZ:  p+=outecef(p,s,sol,opt);   break;
         case SOLF_ENU:  p+=outenu(p,s,sol,rb,opt); break;
         case SOLF_NMEA: p+=outnmea_gga(p,sol);
-                        p+=outnmea_rmc(p,sol); break;
+                        p+=outnmea_rmc(p,sol);
+                        p+=outnmea_gst(p,sol,ssat); break;
     }
     return (int)(p-buff);
 }
@@ -1758,9 +1759,7 @@ extern int outsolexs(uint8_t *buff, const sol_t *sol, const ssat_t *ssat,
     }
     if (opt->posf==SOLF_NMEA) {
         p+=outnmea_gsa(p,sol,ssat);
-        p+=outnmea_gsv(p,sol,ssat);
-        if (!(sol->stat<=SOLQ_NONE||opt->posf==SOLF_ENU))
-            p+=outnmea_gst(p,sol,ssat);
+        p+=outnmea_gsv(p,sol,ssat);        
     }
     return (int)(p-buff);
 }

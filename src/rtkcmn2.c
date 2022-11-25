@@ -229,9 +229,9 @@ const solopt_t solopt_default={ /* defaults solution output options */
     SOLF_LLH,TIMES_GPST,1,3,    /* posf,times,timef,timeu */
     0,1,0,0,0,0,0,              /* degf,outhead,outopt,outvel,datum,height,geoid */
     0,0,0,                      /* solstatic,sstat,trace */
-    {0.0,0.0},                  /* nmeaintv */
+    {0.0,10.0},                  /* nmeaintv */
     " ","",                      /* separator/program name */
-    0.0                          /* max std-dev for solution output (m) (0:all) */
+    10.0                          /* max std-dev for solution output (m) (0:all) */
 };
 const char *formatstrs[32]={    /* stream format strings */
     "RTCM 2",                   /*  0 */
