@@ -404,7 +404,11 @@ static char cmd_1hz[]="!HEX F1 D9 06 44 10 00 00 00 01 00 01 00 00 00 E8 03 00 0
 static char cmd_5hz[]="!HEX F1 D9 06 44 10 00 00 00 01 00 01 00 00 00 C8 00 00 00 00 00 00 00 24 FE\n";
 static char cmd_10hz[]="!HEX F1 D9 06 44 10 00 00 00 01 00 01 00 00 00 64 00 00 00 00 00 00 00 C0 DE\n";
 static char cmd_rtcm1005_enable[]="";
-static char cmd_rtcm1005_disable[]="!HEX F1 D9 06 01 03 00 F8 05 00 07 31";
+static char cmd_rtcm1005_disable[]="!HEX F1 D9 06 01 03 00 F8 05 00 07 31\n";
+static char cmd_numsv_max[]="!HEX F1 D9 06 11 02 00 03 24 40 AB\n"; /* max: 36 ,for 1hz*/
+static char cmd_numsv_10hz[]="!HEX F1 D9 06 11 02 00 03 14 30 9B\n"; /* max: 20 */
+static char cmd_numsv_5hz[]="!HEX F1 D9 06 11 02 00 03 1E 3A A5\n"; /* max: 30 */
+
 static char cmd_msm7_enable[]="!HEX F1 D9 06 01 03 00 F8 4D 01 50 C2\n\
 !HEX F1 D9 06 01 03 00 F8 57 01 5A D6\n\
 !HEX F1 D9 06 01 03 00 F8 61 01 64 EA\n\
@@ -449,19 +453,25 @@ void gen_cmds()
 {
     sprintf(rov_cmd,"%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n",cmd_1hz,cmd_nmea_disable,cmd_wait_100_ms,
     cmd_rtcm1005_disable,cmd_wait_100_ms,cmd_msm7_disable,cmd_wait_100_ms,cmd_msm4_disable,cmd_wait_100_ms);
-
+    
     if (msm_type==7)
     sprintf(rov_cmd,"%s\n%s\n%s\n",rov_cmd,cmd_msm7_enable,cmd_wait_100_ms);
     else if (msm_type==4)
     sprintf(rov_cmd,"%s\n%s\n%s\n",rov_cmd,cmd_msm4_enable,cmd_wait_100_ms);
     else fprintf(stderr,"invalid MSM type.\n");
 
-    if (update_rate==1)
+    if (update_rate==1){
+      sprintf(rov_cmd,"%s\n%s\n",rov_cmd,cmd_numsv_max);
       sprintf(rov_cmd,"%s\n%s\n",rov_cmd,cmd_1hz);
-    else if (update_rate==5)
+    }
+    else if (update_rate==5){
+      sprintf(rov_cmd,"%s\n%s\n",rov_cmd,cmd_numsv_max);
       sprintf(rov_cmd,"%s\n%s\n",rov_cmd,cmd_5hz);
-    else if (update_rate==10)
+    }
+    else if (update_rate==10){
+      sprintf(rov_cmd,"%s\n%s\n",rov_cmd,cmd_numsv_10hz);
       sprintf(rov_cmd,"%s\n%s\n",rov_cmd,cmd_10hz);
+    }
     else
       fprintf(stderr,"invalid update rate.\n");
 }
@@ -710,7 +720,7 @@ static void prstatus(vt_t *vt)
 {
     rtk_t rtk;
     const char *svrstate[]={"stop","run"},*type[]={"rover","base","corr"};
-    const char *sol[]={"-","fix","float","SBAS","DGPS","single","PPP",""};
+    const char *sol[]={"-","rtk fix","rtk float","SBAS","DGPS","single","PPP",""};
     const char *mode[]={
          "single","DGPS","kinematic","static","static-start","moving-base","fixed",
          "PPP-kinema","PPP-static"
