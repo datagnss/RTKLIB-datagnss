@@ -128,7 +128,7 @@ static prcopt_t prcopt;                 /* processing options */
 static solopt_t solopt[2]={{0}};        /* solution options */
 static filopt_t filopt  ={""};          /* file options */
 
-static int posmode=0; /* 0: single, 2: Kine  5: movingb */
+static int posmode=2; /* 0: single, 2: Kine  5: movingb */
 static double baselen=0.0,baseerr=0.0;
 
 /* help text -----------------------------------------------------------------*/
@@ -536,12 +536,14 @@ static int startsvr(vt_t *vt)
     }
     solopt[0].posf=strfmt[3];
     solopt[1].posf=strfmt[4];
+    /*
     prcopt.mode = posmode;
     if (prcopt.mode==PMODE_MOVEB)
     {
         prcopt.baseline[0] = baselen;
         prcopt.baseline[1] = baseerr;
     }
+    */
     
     /* start rtk server */
     if (!rtksvrstart(&svr,svrcycle,buffsize,strtype,paths,strfmt,navmsgsel,
