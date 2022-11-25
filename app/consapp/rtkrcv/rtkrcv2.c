@@ -128,7 +128,7 @@ static prcopt_t prcopt;                 /* processing options */
 static solopt_t solopt[2]={{0}};        /* solution options */
 static filopt_t filopt  ={""};          /* file options */
 
-static int posmode=0; // 0: single, 2: Kine  5: movingb
+static int posmode=0; /* 0: single, 2: Kine  5: movingb */
 static double baselen=0.0,baseerr=0.0;
 
 /* help text -----------------------------------------------------------------*/
