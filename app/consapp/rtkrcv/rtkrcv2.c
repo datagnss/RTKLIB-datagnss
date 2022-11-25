@@ -1246,7 +1246,7 @@ static void cmd_status(char **args, int narg, vt_t *vt)
     
     while (!vt_chkbrk(vt)) {
         if (cycle>0) vt_printf(vt,ESC_CLEAR);
-        prstatus_cn(vt);
+        prstatus(vt);
         if (cycle>0) sleepms(cycle); else return;
     }
     vt_printf(vt,"\n");
