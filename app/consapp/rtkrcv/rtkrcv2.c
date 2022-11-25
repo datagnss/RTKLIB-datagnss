@@ -65,6 +65,7 @@
 #define STATFILE    "rtkrcv_%Y%m%d%h%M.stat"  /* solution status file */
 #define TRACEFILE   "rtkrcv_%Y%m%d%h%M.trace" /* debug trace file */
 #define INTKEEPALIVE 1000               /* keep alive interval (ms) */
+#define FLAGFILE    "/data/rtk/.rtkstatus" /*rtk status flag file*/
 
 #define ESC_CLEAR   "\033[H\033[2J"     /* ansi/vt100 escape: erase screen */
 #define ESC_RESET   "\033[0m"           /* ansi/vt100: reset attribute */
@@ -767,19 +768,22 @@ static void prstatus(vt_t *vt)
     vt_printf(vt,"\n%s%-28s: %s%s\n",ESC_BOLD,"Parameter","Value",ESC_RESET);
     vt_printf(vt,"%-28s: %s\n","rtk server state",svrstate[state]);
     vt_printf(vt,"%-28s: %d\n","processing cycle (ms)",cycle);
+    /*
     vt_printf(vt,"%-28s: %s\n","positioning mode",mode[rtk.opt.mode]);
     vt_printf(vt,"%-28s: %s\n","frequencies",freq[rtk.opt.nf]);
     vt_printf(vt,"%-28s: %02.0f:%02.0f:%04.1f\n","accumulated time to run",rt[0],rt[1],rt[2]);
     vt_printf(vt,"%-28s: %d\n","cpu time for a cycle (ms)",cputime);
     vt_printf(vt,"%-28s: %d\n","missing obs data count",prcout);
     vt_printf(vt,"%-28s: %d,%d\n","bytes in input buffer",nb[0],nb[1]);
-    for (i=0;i<3;i++) {
+    */
+   /* change i=2, to remove corr data line */
+    for (i=0;i<2;i++) {
         sprintf(s,"# of input data %s",type[i]);
         vt_printf(vt,"%-28s: obs(%d),nav(%d),gnav(%d),ion(%d),sbs(%d),pos(%d),dgps(%d),ssr(%d),err(%d)\n",
                 s,nmsg[i][0],nmsg[i][1],nmsg[i][6],nmsg[i][2],nmsg[i][3],
                 nmsg[i][4],nmsg[i][5],nmsg[i][7],nmsg[i][9]);
     }
-    for (i=0;i<3;i++) {
+    for (i=0;i<2;i++) {
         p=s; *p='\0';
         for (j=1;j<100;j++) {
             if (rtcm[i].nmsg2[j]==0) continue;
@@ -805,12 +809,16 @@ static void prstatus(vt_t *vt)
     vt_printf(vt,"%-28s: %.3f\n","solution interval (s)",rtk.tt);
     vt_printf(vt,"%-28s: %.3f\n","age(s)",rtk.sol.age);
     vt_printf(vt,"%-28s: %.3f\n","ratio",rtk.sol.ratio);
-    vt_printf(vt,"%-28s: %d\n","# of satellites rover",nsat0);
+    vt_printf(vt,"%-28s: %d/%d/%d\n","# of satellites rover",nsat0,nsat1,rtk.sol.ns);
+    /*
     vt_printf(vt,"%-28s: %d\n","# of satellites base",nsat1);
     vt_printf(vt,"%-28s: %d\n","# of valid satellites",rtk.sol.ns);
+    */
     vt_printf(vt,"%-28s: %.1f,%.1f,%.1f,%.1f\n","GDOP/PDOP/HDOP/VDOP",dop[0],dop[1],dop[2],dop[3]);
+    /*
     vt_printf(vt,"%-28s: %d\n","# of real estimated states",rtk.na);
     vt_printf(vt,"%-28s: %d\n","# of all estimated states",rtk.nx);
+    */
     vt_printf(vt,"%-28s: %.3f,%.3f,%.3f\n","pos xyz single (m) rover",
             rtk.sol.rr[0],rtk.sol.rr[1],rtk.sol.rr[2]);
     if (norm(rtk.sol.rr,3)>0.0) ecef2pos(rtk.sol.rr,pos); else pos[0]=pos[1]=pos[2]=0.0;
@@ -831,6 +839,7 @@ static void prstatus(vt_t *vt)
     if (norm(rtk.rb,3)>0.0) ecef2pos(rtk.rb,pos); else pos[0]=pos[1]=pos[2]=0.0;
     vt_printf(vt,"%-28s: %.8f,%.8f,%.3f\n","pos llh (deg,m) base",
             pos[0]*R2D,pos[1]*R2D,pos[2]);
+    /*
     vt_printf(vt,"%-28s: %d\n","# of average single pos base",nave);
     vt_printf(vt,"%-28s: %s\n","ant type rover",rtk.opt.pcvr[0].type);
     del=rtk.opt.antdel[0];
@@ -854,6 +863,7 @@ static void prstatus(vt_t *vt)
     vt_printf(vt,"%-28s: %s\n","last time mark",tmcount ? tmstr : "-");
     vt_printf(vt,"%-28s: %d\n","receiver time mark count",rcvcount);
     vt_printf(vt,"%-28s: %d\n","rtklib time mark count",tmcount);
+    */
 }
 
 static void prstatus_cn(vt_t *vt)
@@ -1720,7 +1730,7 @@ void Stop2()
 {
     char c;
     FILE *file;
-    file = fopen("/home/linaro/.rtkstatus", "r");
+    file = fopen(FLAGFILE, "r");
     if (file) {
       c = getc(file);
       if ( c == '1' ) {
