@@ -1965,6 +1965,7 @@ int main(int argc, char **argv)
     /* stdout */
     fprintf(stderr,"%d,%s\n",strtype[0],strpath[0]);
     fprintf(stderr,"update rate: %d Hz\n",update_rate);
+    fprintf(stderr,"debug: %s\n",debugfile); 
     
 
     if (trace>0) {
