@@ -400,14 +400,16 @@ static void readant(vt_t *vt, prcopt_t *opt, nav_t *nav)
 }
 
 /*constant cmd for module*/
-static char cmd_1hz[]="!HEX F1 D9 06 44 10 00 00 00 01 00 01 00 00 00 E8 03 00 00 00 00 00 00 47 13\n";
-static char cmd_5hz[]="!HEX F1 D9 06 44 10 00 00 00 01 00 01 00 00 00 C8 00 00 00 00 00 00 00 24 FE\n";
+static char cmd_1hz[] ="!HEX F1 D9 06 44 10 00 00 00 01 00 01 00 00 00 E8 03 00 00 00 00 00 00 47 13\n";
+static char cmd_5hz[] ="!HEX F1 D9 06 44 10 00 00 00 01 00 01 00 00 00 C8 00 00 00 00 00 00 00 24 FE\n";
 static char cmd_10hz[]="!HEX F1 D9 06 44 10 00 00 00 01 00 01 00 00 00 64 00 00 00 00 00 00 00 C0 DE\n";
+static char cmd_20hz[]="!HEX F1 D9 06 44 10 00 00 00 01 00 01 00 00 00 32 00 00 00 00 00 00 00 8E 4E\n";
 static char cmd_rtcm1005_enable[]="";
 static char cmd_rtcm1005_disable[]="!HEX F1 D9 06 01 03 00 F8 05 00 07 31\n";
-static char cmd_numsv_max[]="!HEX F1 D9 06 11 02 00 03 24 40 AB\n"; /* max: 36 ,for 1hz*/
+static char cmd_numsv_max[] ="!HEX F1 D9 06 11 02 00 03 24 40 AB\n"; /* max: 36 ,for 1hz*/
 static char cmd_numsv_10hz[]="!HEX F1 D9 06 11 02 00 03 14 30 9B\n"; /* max: 20 */
-static char cmd_numsv_5hz[]="!HEX F1 D9 06 11 02 00 03 1E 3A A5\n"; /* max: 30 */
+static char cmd_numsv_5hz[] ="!HEX F1 D9 06 11 02 00 03 1E 3A A5\n"; /* max: 30 */
+static char cmd_numsv_20hz[]="!HEX F1 D9 06 11 02 00 03 0F 2B 96\n"; /* max: 15 for 20hz*/
 
 static char cmd_msm7_enable[]="!HEX F1 D9 06 01 03 00 F8 4D 01 50 C2\n\
 !HEX F1 D9 06 01 03 00 F8 57 01 5A D6\n\
@@ -465,12 +467,16 @@ void gen_cmds()
       sprintf(rov_cmd,"%s\n%s\n",rov_cmd,cmd_1hz);
     }
     else if (update_rate==5){
-      sprintf(rov_cmd,"%s\n%s\n",rov_cmd,cmd_numsv_max);
+      sprintf(rov_cmd,"%s\n%s\n%s\n",rov_cmd,cmd_numsv_max,cmd_wait_100_ms);
       sprintf(rov_cmd,"%s\n%s\n",rov_cmd,cmd_5hz);
     }
     else if (update_rate==10){
-      sprintf(rov_cmd,"%s\n%s\n",rov_cmd,cmd_numsv_10hz);
+      sprintf(rov_cmd,"%s\n%s\n%s\n",rov_cmd,cmd_numsv_10hz,cmd_wait_100_ms);
       sprintf(rov_cmd,"%s\n%s\n",rov_cmd,cmd_10hz);
+    }
+    else if (update_rate==20){
+      sprintf(rov_cmd,"%s\n%s\n%s\n",rov_cmd,cmd_numsv_20hz,cmd_wait_100_ms);
+      sprintf(rov_cmd,"%s\n%s\n",rov_cmd,cmd_20hz);
     }
     else
       fprintf(stderr,"invalid update rate.\n");
