@@ -1,4 +1,5 @@
 # makefile for rtkrcv
+CC=$(CROSS_COMPILE)gcc
 
 BINDIR = /usr/local/bin
 SRC    = ../../../../src

@@ -1,0 +1,12 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "rtkrcv2-arm64",
+            "type": "shell",
+            "command": "cd /home/cheungyong/github/RTKLIB-datagnss/app/consapp/rtkrcv/gcc &&sudo make clean && sudo make ARCH=arm64 CROSS_COMPILE=/home/cheungyong/gcc-linaro-7.1.1-2017.05-x86_64_aarch64-linux-gnu/bin/aarch64-linux-gnu-"
+        }
+    ]
+}
