@@ -1964,6 +1964,8 @@ int main(int argc, char **argv)
     }
 
     fprintf(stderr,"%d,%s\n",strtype[0],strpath[0]);
+    fprintf(stderr,"update rate: %d Hz\n",update_rate);
+    
 
     if (trace>0) {
         traceopen(debugfile);
