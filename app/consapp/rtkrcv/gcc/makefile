@@ -15,8 +15,8 @@ LDLIBS  = -lm -lrt -lpthread
 
 all        : rtkrcv2
 rtkrcv2     : rtkrcv2.o vt.o rtkcmn2.o rtksvr.o rtkpos.o geoid.o solution2.o lambda.o
-rtkrcv2    : sbas.o stream.o rcvraw.o rtcm.o preceph.o options2.o pntpos.o ppp.o ppp_ar.o
-rtkrcv2     : novatel.o ublox.o crescent.o skytraq.o javad.o nvs.o binex.o
+rtkrcv2     : sbas.o stream.o rcvraw.o rtcm.o preceph.o options2.o pntpos.o ppp.o ppp_ar.o
+rtkrcv2     : novatel.o ublox.o crescent.o skytraq.o allystar.o javad.o nvs.o binex.o
 rtkrcv2     : rt17.o ephemeris.o rinex.o ionex.o rtcm2.o rtcm3.o rtcm3e.o
 rtkrcv2     : tides.o septentrio.o swiftnav.o
 
@@ -71,6 +71,8 @@ crescent.o : $(SRC)/rcv/crescent.c
 	$(CC) -c $(CFLAGS) $(SRC)/rcv/crescent.c
 skytraq.o  : $(SRC)/rcv/skytraq.c
 	$(CC) -c $(CFLAGS) $(SRC)/rcv/skytraq.c
+allystar.o  : $(SRC)/rcv/allystar.c
+	$(CC) -c $(CFLAGS) $(SRC)/rcv/allystar.c	
 javad.o    : $(SRC)/rcv/javad.c
 	$(CC) -c $(CFLAGS) $(SRC)/rcv/javad.c
 nvs.o      : $(SRC)/rcv/nvs.c
@@ -113,6 +115,7 @@ ublox.o    : $(SRC)/rtklib.h
 swiftnav.o : $(SRC)/rtklib.h
 crescent.o : $(SRC)/rtklib.h
 skytraq.o  : $(SRC)/rtklib.h
+allystar.o : $(SRC)/rtklib.h
 javad.o    : $(SRC)/rtklib.h
 nvs.o      : $(SRC)/rtklib.h
 binex.o    : $(SRC)/rtklib.h

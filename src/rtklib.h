@@ -1627,6 +1627,8 @@ EXPORT int input_sbff  (raw_t *raw, FILE *fp);
 EXPORT int input_tersusf(raw_t *raw, FILE *fp);
 
 EXPORT int gen_ubx (const char *msg, uint8_t *buff);
+EXPORT void gen_cfg_fixedecef_hex(double *xyz, uint8_t *buff);
+EXPORT int gen_ally(const char *msg, uint8_t *buff);
 EXPORT int gen_stq (const char *msg, uint8_t *buff);
 EXPORT int gen_nvs (const char *msg, uint8_t *buff);
 
