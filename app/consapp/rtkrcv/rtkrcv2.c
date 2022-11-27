@@ -1962,7 +1962,7 @@ int main(int argc, char **argv)
         else if (!strcmp(argv[i],"-sta")&&i+1<argc) strcpy(sta_name,argv[++i]);
         else printusage();
     }
-    /**/
+    /* stdout */
     fprintf(stderr,"%d,%s\n",strtype[0],strpath[0]);
     fprintf(stderr,"update rate: %d Hz\n",update_rate);
     
