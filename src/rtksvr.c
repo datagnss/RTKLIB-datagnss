@@ -45,6 +45,24 @@
 *-----------------------------------------------------------------------------*/
 #include "rtklib.h"
 
+#define MAX_POSVAR 0.5
+#define MAX_SOL_STD 20.0
+#define ELE_MASK 15.0*D2R
+#define SNR_MASK_L1 38
+#define SNR_MASK_L2 32
+#define SNR_MASK_L5 32
+#define OPTS_SLIP_THRES 0.05
+#define OPTS_MIN_FIX_SATS 4
+#define OPTS_MIN_HOLD_SATS 5
+#define OPTS_MIN_DROP_SATS 10
+#define OPTS_RAIM_FDE 1
+#define OPTS_AR_FILTER 1
+
+/*test*/
+#define OPTS_REC_DYNAMICS 1
+
+#define OPTS_MAX_AVE_EP 15
+
 #define MIN_INT_RESET   30000   /* mininum interval of reset command (ms) */
 
 /* write solution header to output stream ------------------------------------*/
@@ -505,6 +523,64 @@ static double baseline_len(const rtk_t *rtk)
 	}
 	return norm(dr,3)*0.001; /* (km) */
 }
+
+
+static void optimized(rtksvr_t *svr, char **rcvopts, prcopt_t *prcopt, solopt_t *solopt)
+{
+    int i,j;
+    char *q;
+ 
+    prcopt->thresar[2] = 0.0;
+
+    prcopt->outsingle = 1; /* output single by dgps/float/fix/ppp outage */
+    solopt->maxsolstd = MAX_SOL_STD;
+    solopt->geoid=0;
+    solopt->datum=0;
+    solopt->height=0;
+    solopt->degf=0;
+    solopt->outopt=1;
+    solopt->outhead=1;
+    solopt->outvel=1;
+    solopt->solstatic=0;
+
+   
+    for(i=0;i<2;i++){
+        prcopt->snrmask.ena[i]=1;
+        for(j=0;j<9;j++)
+            prcopt->snrmask.mask[i][j] = i > 0 ? SNR_MASK_L2 : SNR_MASK_L1;
+	}
+    prcopt->ionoopt=IONOOPT_BRDC;
+    prcopt->tropopt = TROPOPT_SAAS;
+    prcopt->sateph = EPHOPT_BRDC;
+    prcopt->dynamics = OPTS_REC_DYNAMICS;
+    prcopt->elmin = ELE_MASK; 
+    prcopt->posopt[4]=OPTS_RAIM_FDE; /* raim_fde:on */
+    prcopt->elmaskar = ELE_MASK*1.5;
+    prcopt->elmaskhold = ELE_MASK*1.5;
+    prcopt->thresslip = OPTS_SLIP_THRES;
+        
+    prcopt->minfixsats=OPTS_MIN_FIX_SATS;
+    prcopt->minholdsats=OPTS_MIN_HOLD_SATS;
+    prcopt->mindropsats=OPTS_MIN_DROP_SATS;
+    prcopt->arfilter=OPTS_AR_FILTER;
+    prcopt->varholdamb=0.1;
+    prcopt->gainholdamb=0.01;
+    prcopt->thresar[3] = 1E-7;
+    prcopt->thresar[4] = 1E-3;
+    prcopt->maxout=100;
+    
+    prcopt->maxaveep=OPTS_MAX_AVE_EP;
+    prcopt->thresar[1] = MAX_POSVAR; /*max position variance filter for AR*/
+
+
+    tracet(3,"armode=%d gloarmode=%d bdsarmode=%d\n",
+               prcopt->modear,prcopt->glomodear,prcopt->bdsmodear);
+
+    /*  end of optimized for HD9310 */
+
+}
+
+
 /* send nmea request to base/nrtk input stream -------------------------------*/
 static void send_nmea(rtksvr_t *svr, uint32_t *tickreset)
 {
@@ -857,6 +933,9 @@ extern int rtksvrstart(rtksvr_t *svr, int cycle, int buffsize, int *strs,
     svr->nsbs=0;
     svr->nsol=0;
     svr->prcout=0;
+
+    optimized(svr,rcvopts,prcopt,solopt);
+
     rtkfree(&svr->rtk);
     rtkinit(&svr->rtk,prcopt);
     

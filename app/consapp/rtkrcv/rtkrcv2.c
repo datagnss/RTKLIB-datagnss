@@ -497,7 +497,7 @@ static int startsvr(vt_t *vt)
         strpath[6],strpath[7]
     };
     char errmsg[2048]="";
-    int i,ret,stropt[8]={0};
+    int i,j,ret,stropt[8]={0};
     
     trace(3,"startsvr:\n");
 
@@ -553,14 +553,6 @@ static int startsvr(vt_t *vt)
     }
     solopt[0].posf=strfmt[3];
     solopt[1].posf=strfmt[4];
-    /*
-    prcopt.mode = posmode;
-    if (prcopt.mode==PMODE_MOVEB)
-    {
-        prcopt.baseline[0] = baselen;
-        prcopt.baseline[1] = baseerr;
-    }
-    */
     
     /* start rtk server */
     if (!rtksvrstart(&svr,svrcycle,buffsize,strtype,paths,strfmt,navmsgsel,

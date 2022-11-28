@@ -12,6 +12,7 @@
 #define ALLSYNC1    0xF1        /* message sync code 1 */
 #define ALLSYNC2    0xD9        /* message sync code 2 */
 #define ALLCFG      0x06        /* message cfg-??? */
+#define ALLCFGMSG   0x0601
 #define ALLNAV      0x01
 #define ALLMON      0x0A
 #define ALLMON_VER  0x0A04
@@ -26,6 +27,16 @@
 #define ID_MSG_RTCM1097 0xF861
 #define ID_MSG_RTCM1117 0xF875
 #define ID_MSG_RTCM1127 0xF87F
+
+#define ID_MSG_NMEA 0xF0
+/* NMEA data */
+#define ID_MSG_GGA 0xF000
+#define ID_MSG_GSA 0xF002
+#define ID_MSG_GSV 0xF004
+#define ID_MSG_RMC 0xF005
+#define ID_MSG_GST 0xF008
+#define ID_MSG_ZDA 0xF007
+#define ID_MSG_TXT 0xF020
 
 #define ID_MSG_RTCM1074 0xF84A
 #define ID_MSG_RTCM1084 0xF854
@@ -111,7 +122,7 @@ extern void gen_cfg_fixedecef_hex(double *xyz,uint8_t *buff)
 {
 	uint8_t *q=buff;
     int i4;
-    int i=0;
+    int i=0,n;
 
 	/* 
     cfg-fixedecef F1 D9 06 14 0C 00 00 00 00 00 00 00 00 00 00 00 00 00 26 34
@@ -123,7 +134,7 @@ extern void gen_cfg_fixedecef_hex(double *xyz,uint8_t *buff)
 	*q++=ALLSYNC2;
 	*q++=ALLCFG;
 	*q++=0x14; /* cfg_fixedecef */
-	*q++=0x0C00; /* payload length,2 bytes */
+	q+=2; /* payload length,2 bytes */
 
 
 	for(i=0;i<3;i++){
@@ -133,9 +144,11 @@ extern void gen_cfg_fixedecef_hex(double *xyz,uint8_t *buff)
 	    q+=4;
 	}
 
-	setcs(buff,20);
+    n=(int)(q-buff)+2;
+    setU2(buff+4,(unsigned short)(n-8)); /* set length */
+	setcs(buff,n);
 
-    traceb(3,buff,20);
+    traceb(3,buff,n);
 
     return;
 }
@@ -195,7 +208,9 @@ const uint32_t gnss_id[]= {
 /* generate ublox binary message -----------------------------------------------
 * generate ublox binary message from message string
 * args   : char  *msg   IO     message string 
-*            "CFG-MSG   msgid msgsubid period"
+*            "CFG-MSG   msgid msgsubid period,0xF8 0x61 1,1097"
+*            "CFG-NMEA  nmea rate"
+*            "CFG-RTCM  4/7 rate"
 *            "CFG-NUMSV min max"
 *            "CFG-FIXEDECEF x y z"
 *            "CFG-SURVEY mindura acclimit"
@@ -206,26 +221,28 @@ extern int gen_ally(const char *msg, uint8_t *buff)
 {
     const char *cmd[]={
         "MSG","CFG","ELEV","NAVSAT","NUMSV","SURVEY","FIXEDLLA",
-        "FIXEDECEF","BDGEO","CARRSMOOTH","SIMPLERST","NMEAVER","PWRCTL2"
+        "FIXEDECEF","BDGEO","CARRSMOOTH","SIMPLERST","NMEAVER","RATE"
     };
     const uint8_t id[]={
         0x01,0x09,0x0B,0x0C,0x11,0x12,0x13,0x14,0x16,0x17,0x40,0x43,0x44
     };
 
+    const uint8_t nmeaid[]={0x00, 0x02, 0x04, 0x05, 0x07, 0x08, 0x20};
+
     const int prm[][32]={
         {FU1,FU1,FU1},                  /* MSG */
-        {FU4,FU4},                      /* CFG */
+        {FU4,FU4},                      /* CFG,0 7 */
         {FR4,FR4},                      /* ELEV */
         {FU4},                          /* NAVSAT */
-        {FU1,FU1},                      /* NUMSV */
-        {FU4,FU4},                      /* SURVEY */
+        {FU1,FU1},                      /* NUMSV,3 20 */
+        {FU4,FU4},                      /* SURVEY,30s 3000mm */
         {FS4,FS4,FS4},                  /* FIXEDLLA */
         {FS4,FS4,FS4},                  /* FIXEDECEF */
         {FU1,FU1},                      /* BDGEO */
         {FS1},                          /* CARRSMOOTH */
         {FU1},                          /* SIMPLERST */
         {FU1},                          /* NMEAVER */
-        {FU1,FU1,FU2,FS4,FU4,FU4}       /* PWRCTL2 */
+        {FU1,FU1,FU2,FS4,FU4,FU4}       /* RATE,PWRCTL2,0 0 1 1 200 0 */
     };
 
     uint8_t *q=buff;
@@ -240,34 +257,35 @@ extern int gen_ally(const char *msg, uint8_t *buff)
         args[narg++]=p;
     }
     if (narg<1||strncmp(args[0],"CFG-",4)) return 0;
-    
-    for (i=0;*cmd[i];i++) {
-        if (!strcmp(args[0]+4,cmd[i])) break;
-    }
-    if (!*cmd[i]) return 0;
-    
+
     *q++=ALLSYNC1;
     *q++=ALLSYNC2;
     *q++=ALLCFG;
-    *q++=id[i];
-    q+=2;
 
-    for (j=1;prm[i][j-1]||j<narg;j++) {
-        switch (prm[i][j-1]) {
-            case FU1 : setU1(q,j<narg?(uint8_t )stoi(args[j]):0); q+=1; break;
-            case FU2 : setU2(q,j<narg?(uint16_t)stoi(args[j]):0); q+=2; break;
-            case FU4 : setU4(q,j<narg?(uint32_t)stoi(args[j]):0); q+=4; break;
-            case FS1 : setS1(q,j<narg?(int8_t  )stoi(args[j]):0); q+=1; break;
-            case FS2 : setS2(q,j<narg?(int16_t )stoi(args[j]):0); q+=2; break;
-            case FS4 : setS4(q,j<narg?(int32_t )stoi(args[j]):0); q+=4; break;
-            case FR4 : setR4(q,j<narg?(float         )atof(args[j]):0); q+=4; break;
-            default  : setU1(q,j<narg?(uint8_t )stoi(args[j]):0); q+=1; break;
+    for (i=0;*cmd[i];i++) {
+            if (!strcmp(args[0]+4,cmd[i])) break;
         }
-    }
+        if (!*cmd[i]) return 0;
+        
+        *q++=id[i];
+        q+=2;
 
-    n=(int)(q-buff)+2;
-    setU2(buff+4,(unsigned short)(n-8));
-    setcs(buff,n);
+        for (j=1;prm[i][j-1]||j<narg;j++) {
+            switch (prm[i][j-1]) {
+                case FU1 : setU1(q,j<narg?(uint8_t )stoi(args[j]):0); q+=1; break;
+                case FU2 : setU2(q,j<narg?(uint16_t)stoi(args[j]):0); q+=2; break;
+                case FU4 : setU4(q,j<narg?(uint32_t)stoi(args[j]):0); q+=4; break;
+                case FS1 : setS1(q,j<narg?(int8_t  )stoi(args[j]):0); q+=1; break;
+                case FS2 : setS2(q,j<narg?(int16_t )stoi(args[j]):0); q+=2; break;
+                case FS4 : setS4(q,j<narg?(int32_t )stoi(args[j]):0); q+=4; break;
+                case FR4 : setR4(q,j<narg?(float         )atof(args[j]):0); q+=4; break;
+                default  : setU1(q,j<narg?(uint8_t )stoi(args[j]):0); q+=1; break;
+            }
+        }
+
+        n=(int)(q-buff)+2;
+        setU2(buff+4,(unsigned short)(n-8));
+        setcs(buff,n);
     
     trace(5,"gen_ally: buff=\n"); traceb(5,buff,n);
     return n;
