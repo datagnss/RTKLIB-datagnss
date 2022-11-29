@@ -1,5 +1,7 @@
 # makefile for str2str
 
+CC=$(CROSS_COMPILE)gcc
+
 BINDIR = /usr/local/bin
 SRC    = ../../../../src
 
@@ -12,8 +14,8 @@ CFLAGS = -Wall -O3 -ansi -pedantic -Wno-unused-but-set-variable -I$(SRC) $(OPTIO
 LDLIBS  = -lm -lrt -lpthread
 
 all        : str2str
-str2str    : str2str.o stream.o rtkcmn.o solution.o sbas.o geoid.o
-str2str    : rcvraw.o novatel.o ublox.o crescent.o skytraq.o javad.o
+str2str    : str2str.o stream.o rtkcmn2.o solution2.o sbas.o geoid.o
+str2str    : rcvraw.o novatel.o ublox.o crescent.o skytraq.o allystar.o javad.o
 str2str    : nvs.o binex.o rt17.o rtcm.o rtcm2.o rtcm3.o rtcm3e.o preceph.o streamsvr.o
 str2str    : septentrio.o swiftnav.o
 
@@ -23,10 +25,10 @@ stream.o   : $(SRC)/stream.c
 	$(CC) -c $(CFLAGS) $(SRC)/stream.c
 streamsvr.o: $(SRC)/streamsvr.c
 	$(CC) -c $(CFLAGS) $(SRC)/streamsvr.c
-rtkcmn.o   : $(SRC)/rtkcmn.c
-	$(CC) -c $(CFLAGS) $(SRC)/rtkcmn.c
-solution.o : $(SRC)/solution.c
-	$(CC) -c $(CFLAGS) $(SRC)/solution.c
+rtkcmn2.o   : $(SRC)/rtkcmn2.c
+	$(CC) -c $(CFLAGS) $(SRC)/rtkcmn2.c
+solution2.o : $(SRC)/solution2.c
+	$(CC) -c $(CFLAGS) $(SRC)/solution2.c
 sbas.o     : $(SRC)/sbas.c
 	$(CC) -c $(CFLAGS) $(SRC)/sbas.c
 geoid.o    : $(SRC)/geoid.c
@@ -43,6 +45,8 @@ crescent.o : $(SRC)/rcv/crescent.c
 	$(CC) -c $(CFLAGS) $(SRC)/rcv/crescent.c
 skytraq.o  : $(SRC)/rcv/skytraq.c
 	$(CC) -c $(CFLAGS) $(SRC)/rcv/skytraq.c
+allystar.o  : $(SRC)/rcv/allystar.c
+	$(CC) -c $(CFLAGS) $(SRC)/rcv/allystar.c
 javad.o    : $(SRC)/rcv/javad.c
 	$(CC) -c $(CFLAGS) $(SRC)/rcv/javad.c
 nvs.o      : $(SRC)/rcv/nvs.c
@@ -79,6 +83,7 @@ ublox.o    : $(SRC)/rtklib.h
 ss2.o      : $(SRC)/rtklib.h
 crescent.o : $(SRC)/rtklib.h
 skytraq.o  : $(SRC)/rtklib.h
+allystar.o  : $(SRC)/rtklib.h
 javad.o    : $(SRC)/rtklib.h
 nvs.o      : $(SRC)/rtklib.h
 binex.o    : $(SRC)/rtklib.h
@@ -90,6 +95,9 @@ rtcm3e.o   : $(SRC)/rtklib.h
 preceph.o  : $(SRC)/rtklib.h
 septentrio.o: $(SRC)/rtklib.h
 swiftnav.o  : $(SRC)/rtklib.h
+
+clean:
+	rm -f str2str rtkrcv.exe *.o
 
 install:
 	cp str2str $(BINDIR)
@@ -114,8 +122,4 @@ test5:
 	./str2str -in ../oem6_20121107.gps#nov -out oem6_20121107_gal.rtcm3#rtcm3 -msg "1097(10)"
 
 test6:
-	./str2str -in serial://ttyS54:115200#nov -out tcpsvr://:2103#rtcm3 -c ../../../data/oem4_raw_10hz.cmd
-
-clean:
-	rm -f str2str str2str.exe *.o *.out *.trace
-
+	./str2str -in serial://ttyS54:115200#nov -out tcpsvr://:2103#rtcm3 -c ../../../data/oe

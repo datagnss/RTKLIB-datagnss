@@ -399,51 +399,89 @@ static void readant(vt_t *vt, prcopt_t *opt, nav_t *nav)
     free(pcvr.pcv); free(pcvs.pcv);
 }
 
-/*constant cmd for module*/
-static char cmd_1hz[] ="!HEX F1 D9 06 44 10 00 00 00 01 00 01 00 00 00 E8 03 00 00 00 00 00 00 47 13\n";
-static char cmd_5hz[] ="!HEX F1 D9 06 44 10 00 00 00 01 00 01 00 00 00 C8 00 00 00 00 00 00 00 24 FE\n";
-static char cmd_10hz[]="!HEX F1 D9 06 44 10 00 00 00 01 00 01 00 00 00 64 00 00 00 00 00 00 00 C0 DE\n";
-static char cmd_20hz[]="!HEX F1 D9 06 44 10 00 00 00 01 00 01 00 00 00 32 00 00 00 00 00 00 00 8E 4E\n";
-static char cmd_rtcm1005_enable[]="";
-static char cmd_rtcm1005_disable[]="!HEX F1 D9 06 01 03 00 F8 05 00 07 31\n";
-static char cmd_numsv_max[] ="!HEX F1 D9 06 11 02 00 03 24 40 AB\n"; /* max: 36 ,for 1hz*/
-static char cmd_numsv_10hz[]="!HEX F1 D9 06 11 02 00 03 14 30 9B\n"; /* max: 20 */
-static char cmd_numsv_5hz[] ="!HEX F1 D9 06 11 02 00 03 1E 3A A5\n"; /* max: 30 */
-static char cmd_numsv_20hz[]="!HEX F1 D9 06 11 02 00 03 0F 2B 96\n"; /* max: 15 for 20hz*/
+/*
+#unlock fixed position
+!ALLYSTAR CFG-FIXEDECEF 0 0 0
+#fixed ecef
+#!ALLYSTAR CFG-FIXEDECEF -285783587 466031308 327462568
+*/
 
-static char cmd_msm7_enable[]="!HEX F1 D9 06 01 03 00 F8 4D 01 50 C2\n\
-!HEX F1 D9 06 01 03 00 F8 57 01 5A D6\n\
-!HEX F1 D9 06 01 03 00 F8 61 01 64 EA\n\
-!HEX F1 D9 06 01 03 00 F8 75 01 78 12\n\
-!HEX F1 D9 06 01 03 00 F8 7F 01 82 26\n";
-static char cmd_msm7_disable[]="!HEX F1 D9 06 01 03 00 F8 4D 00 4F C1\n\
-!HEX F1 D9 06 01 03 00 F8 57 00 59 D5\n\
-!HEX F1 D9 06 01 03 00 F8 61 00 63 E9\n\
-!HEX F1 D9 06 01 03 00 F8 75 00 77 11\n\
-!HEX F1 D9 06 01 03 00 F8 7F 00 81 25\n";
-static char cmd_msm4_enable[]="";
-static char cmd_msm4_disable[]="!HEX F1 D9 06 01 03 00 F8 4A 00 4C BB\n\
-!HEX F1 D9 06 01 03 00 F8 54 00 56 CF\n\
-!HEX F1 D9 06 01 03 00 F8 58 00 5A DF\n\
-!HEX F1 D9 06 01 03 00 F8 72 00 74 0B\n\
-!HEX F1 D9 06 01 03 00 F8 7C 00 7E 1F\n";
-static char cmd_eph_enable[]="!HEX F1 D9 06 01 03 00 F8 13 05 1A 52\n\
-!HEX F1 D9 06 01 03 00 F8 14 05 1B 54\n\
-!HEX F1 D9 06 01 03 00 F8 2A 05 31 80\n\
-!HEX F1 D9 06 01 03 00 F8 2C 05 33 84\n\
-!HEX F1 D9 06 01 03 00 F8 2D 05 34 86\n";
-static char cmd_eph_disable[]="";
-static char cmd_nmea_enable[]="";
-static char cmd_nmea_disable[]="!HEX F1 D9 06 01 03 00 F0 00 00 FA 0F\n\
-!HEX F1 D9 06 01 03 00 F0 01 00 FB 11\n\
-!HEX F1 D9 06 01 03 00 F0 02 00 FC 13\n\
-!HEX F1 D9 06 01 03 00 F0 03 00 FD 15\n\
-!HEX F1 D9 06 01 03 00 F0 04 00 FE 17\n\
-!HEX F1 D9 06 01 03 00 F0 05 00 FF 19\n\
-!HEX F1 D9 06 01 03 00 F0 06 00 00 1B\n\
-!HEX F1 D9 06 01 03 00 F0 07 00 01 1D\n\
-!HEX F1 D9 06 01 03 00 F0 08 00 02 1F\n\
-!HEX F1 D9 06 01 03 00 F0 20 00 1A 4F\n";
+/*constant cmd for module*/
+static char cmd_1hz[]="!ALLYSTAR CFG-RATE 0 0 1 1 1000 0\n";
+static char cmd_5hz[]="!ALLYSTAR CFG-RATE 0 0 1 1 200 0\n";
+static char cmd_10hz[]="!ALLYSTAR CFG-RATE 0 0 1 1 100 0\n";
+static char cmd_20hz[]="!ALLYSTAR CFG-RATE 0 0 1 1 50 0\n";
+static char cmd_rtcm1005_enable[]="!ALLYSTAR CFG-MSG 0xF8 0x05 5\n";
+static char cmd_rtcm1005_disable[]="!ALLYSTAR CFG-MSG 0xF8 0x05 0\n";
+static char cmd_numsv_max[] ="!ALLYSTAR CFG-NUMSV 3 36\n"; /* max: 36 ,for 1hz*/
+static char cmd_numsv_10hz[]="!ALLYSTAR CFG-NUMSV 3 20\n"; /* max: 20 */
+static char cmd_numsv_5hz[] ="!ALLYSTAR CFG-NUMSV 3 36\n"; /* max: 30 */
+static char cmd_numsv_20hz[]="!ALLYSTAR CFG-NUMSV 3 15\n"; /* max: 15 for 20hz*/
+
+static char cmd_navsat[]="!ALLYSTAR CFG-NAVSAT 0x04108235\n";
+
+static char cmd_msm7_enable[]="!ALLYSTAR CFG-MSG 0xF8 0x4D 1\n\
+!ALLYSTAR CFG-MSG 0xF8 0x57 1\n\
+!ALLYSTAR CFG-MSG 0xF8 0x61 1\n\
+!ALLYSTAR CFG-MSG 0xF8 0x75 1\n\
+!ALLYSTAR CFG-MSG 0xF8 0x7F 1";
+
+static char cmd_msm7_disable[]="!ALLYSTAR CFG-MSG 0xF8 0x4D 0\n\
+!ALLYSTAR CFG-MSG 0xF8 0x57 0\n\
+!ALLYSTAR CFG-MSG 0xF8 0x61 0\n\
+!ALLYSTAR CFG-MSG 0xF8 0x6B 0\n\
+!ALLYSTAR CFG-MSG 0xF8 0x75 0\n\
+!ALLYSTAR CFG-MSG 0xF8 0x7F 0\n";
+
+static char cmd_msm4_enable[]="!ALLYSTAR CFG-MSG 0xF8 0x4A 1\n\
+!ALLYSTAR CFG-MSG 0xF8 0x54 1\n\
+!ALLYSTAR CFG-MSG 0xF8 0x58 1\n\
+!ALLYSTAR CFG-MSG 0xF8 0x72 1\n\
+!ALLYSTAR CFG-MSG 0xF8 0x7C 1\n";
+
+static char cmd_msm4_disable[]="!ALLYSTAR CFG-MSG 0xF8 0x4A 0\n\
+!ALLYSTAR CFG-MSG 0xF8 0x54 0\n\
+!ALLYSTAR CFG-MSG 0xF8 0x58 0\n\
+!ALLYSTAR CFG-MSG 0xF8 0x72 0\n\
+!ALLYSTAR CFG-MSG 0xF8 0x7C 0\n";
+
+/*
+F813
+F814
+F82A
+F82C
+F82D
+*/
+static char cmd_eph_enable[]="!ALLYSTAR CFG-MSG 0xF8 0x13 5\n\
+!ALLYSTAR CFG-MSG 0xF8 0x14 5\n\
+!ALLYSTAR CFG-MSG 0xF8 0x2A 5\n\
+!ALLYSTAR CFG-MSG 0xF8 0x2C 5\n\
+!ALLYSTAR CFG-MSG 0xF8 0x2D 5\n";
+static char cmd_eph_disable[]="!ALLYSTAR CFG-MSG 0xF8 0x13 0\n\
+!ALLYSTAR CFG-MSG 0xF8 0x14 0\n\
+!ALLYSTAR CFG-MSG 0xF8 0x2A 0\n\
+!ALLYSTAR CFG-MSG 0xF8 0x2C 0\n\
+!ALLYSTAR CFG-MSG 0xF8 0x2D 0\n";
+static char cmd_nmea_enable[]="!ALLYSTAR CFG-MSG 0xF0 0x00 1\n\
+!ALLYSTAR CFG-MSG 0xF0 0x01 0\n\
+!ALLYSTAR CFG-MSG 0xF0 0x02 10\n\
+!ALLYSTAR CFG-MSG 0xF0 0x03 0\n\
+!ALLYSTAR CFG-MSG 0xF0 0x04 10\n\
+!ALLYSTAR CFG-MSG 0xF0 0x05 1\n\
+!ALLYSTAR CFG-MSG 0xF0 0x06 0\n\
+!ALLYSTAR CFG-MSG 0xF0 0x07 0\n\
+!ALLYSTAR CFG-MSG 0xF0 0x08 1\n\
+!ALLYSTAR CFG-MSG 0xF0 0x20 1\n";
+static char cmd_nmea_disable[]="!ALLYSTAR CFG-MSG 0xF0 0x00 0\n\
+!ALLYSTAR CFG-MSG 0xF0 0x01 0\n\
+!ALLYSTAR CFG-MSG 0xF0 0x02 0\n\
+!ALLYSTAR CFG-MSG 0xF0 0x03 0\n\
+!ALLYSTAR CFG-MSG 0xF0 0x04 0\n\
+!ALLYSTAR CFG-MSG 0xF0 0x05 0\n\
+!ALLYSTAR CFG-MSG 0xF0 0x06 0\n\
+!ALLYSTAR CFG-MSG 0xF0 0x07 0\n\
+!ALLYSTAR CFG-MSG 0xF0 0x08 0\n\
+!ALLYSTAR CFG-MSG 0xF0 0x20 0\n";
 static char cmd_wait_100_ms[]="!WAIT 100\n";
 static char cmd_wait_500_ms[]="!WAIT 500\n";
 
@@ -453,7 +491,7 @@ static int msm_type=7;
 /* generate cmds */
 void gen_cmds()
 {
-    sprintf(rov_cmd,"%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n",cmd_1hz,cmd_nmea_disable,cmd_wait_100_ms,
+    sprintf(rov_cmd,"%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n",cmd_1hz,cmd_navsat,cmd_nmea_disable,cmd_wait_100_ms,
     cmd_rtcm1005_disable,cmd_wait_100_ms,cmd_msm7_disable,cmd_wait_100_ms,cmd_msm4_disable,cmd_wait_100_ms);
     
     if (msm_type==7)
@@ -2018,4 +2056,5 @@ int main(int argc, char **argv)
 
     traceclose();
     return 0;
+
 }
